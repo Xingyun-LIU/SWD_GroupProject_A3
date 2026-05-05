@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Delete Course</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #0a0a12;
+      --surface: rgba(255,255,255,0.04);
+      --border: rgba(255,255,255,0.08);
+      --accent: #f87171;
+      --accent-glow: rgba(248,113,113,0.22);
+      --text: #f0eeff;
+      --muted: rgba(240,238,255,0.45);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh; background: var(--bg);
+      font-family: 'DM Sans', sans-serif;
+      display: flex; align-items: flex-start; justify-content: center;
+      padding: 32px 16px 48px; overflow-x: hidden;
+    }
+    body::before {
+      content: ''; position: fixed; inset: 0;
+      background:
+        radial-gradient(ellipse 60% 50% at 80% 5%,  rgba(248,113,113,0.18) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 50% at 10% 95%, rgba(124,109,250,0.1) 0%, transparent 55%);
+      z-index: 0;
+    }
+
+    .card {
+      position: relative; z-index: 2;
+      width: min(560px, 96vw);
+      background: rgba(15,14,28,0.80);
+      border: 1px solid var(--border);
+      border-radius: 32px;
+      backdrop-filter: blur(28px);
+      box-shadow: 0 0 0 1px rgba(248,113,113,0.1), 0 40px 80px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.07);
+      padding: 48px 44px 52px;
+      animation: cardIn .8s cubic-bezier(.16,1,.3,1) both;
+    }
+    @keyframes cardIn { from{opacity:0;transform:translateY(28px)} to{opacity:1;transform:none} }
+
+    .back-link {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 13px; color: var(--muted); text-decoration: none;
+      margin-bottom: 32px; transition: color .2s;
+    }
+    .back-link:hover { color: var(--accent); }
+
+    .page-badge {
+      display: inline-block; font-size: 11px; font-weight: 500;
+      letter-spacing: .15em; text-transform: uppercase;
+      color: var(--accent); background: rgba(248,113,113,0.1);
+      border: 1px solid rgba(248,113,113,0.25);
+      border-radius: 99px; padding: 4px 14px; margin-bottom: 16px;
+    }
+
+    h1 { font-family: 'Playfair Display', serif; font-size: 36px; font-weight: 900; color: var(--text); letter-spacing: -.02em; margin-bottom: 8px; }
+    h1 span { color: var(--accent); }
+    .subtitle { font-size: 14px; color: var(--muted); margin-bottom: 32px; }
+
+    /* Search */
+    .lookup-wrap { display: flex; gap: 12px; margin-bottom: 28px; }
+    .lookup-wrap input {
+      flex: 1; background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+      border-radius: 14px; padding: 14px 18px;
+      font-family: 'DM Sans', sans-serif; font-size: 15px; color: var(--text);
+      outline: none; transition: all .25s;
+    }
+    .lookup-wrap input::placeholder { color: rgba(240,238,255,0.25); }
+    .lookup-wrap input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+    .lookup-btn {
+      background: rgba(248,113,113,0.12); border: 1px solid rgba(248,113,113,0.28);
+      border-radius: 14px; padding: 14px 22px;
+      font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500;
+      color: var(--accent); cursor: pointer; transition: all .25s; white-space: nowrap;
+    }
+    .lookup-btn:hover { background: rgba(248,113,113,0.22); }
+
+    /* Course preview */
+    .preview { display: none; }
+    .preview.visible { display: block; }
+
+    .course-preview-card {
+      background: rgba(248,113,113,0.06);
+      border: 1px solid rgba(248,113,113,0.2);
+      border-radius: 18px; padding: 20px 22px;
+      margin-bottom: 24px;
+    }
+    .cp-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+    .cp-name { font-size: 18px; font-weight: 600; color: var(--text); }
+    .cp-code {
+      font-size: 11px; letter-spacing: .1em; text-transform: uppercase;
+      color: var(--accent); background: rgba(248,113,113,0.12);
+      border-radius: 8px; padding: 3px 10px;
+    }
+    .cp-meta { display: flex; flex-wrap: wrap; gap: 14px; font-size: 13px; color: var(--muted); }
+
+    /* Warning box */
+    .warning-box {
+      background: rgba(248,113,113,0.08); border: 1px solid rgba(248,113,113,0.25);
+      border-radius: 14px; padding: 16px 18px;
+      display: flex; gap: 12px; align-items: flex-start;
+      margin-bottom: 24px;
+    }
+    .warning-icon { font-size: 20px; flex-shrink: 0; margin-top: 1px; }
+    .warning-text { font-size: 14px; color: rgba(248,113,113,0.85); line-height: 1.55; }
+    .warning-text strong { color: var(--accent); }
+
+    /* Confirm input */
+    .confirm-field { margin-bottom: 24px; }
+    .confirm-field label {
+      display: block; font-size: 12px; font-weight: 500;
+      letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px;
+    }
+    .confirm-field label span { color: var(--accent); font-style: italic; text-transform: none; letter-spacing: 0; }
+    .confirm-field input {
+      width: 100%; background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+      border-radius: 14px; padding: 14px 18px;
+      font-family: 'DM Sans', sans-serif; font-size: 15px; color: var(--text);
+      outline: none; transition: all .25s;
+    }
+    .confirm-field input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+
+    /* Buttons */
+    .btn-row { display: flex; gap: 12px; }
+    .cancel-btn {
+      flex: 1; padding: 14px; background: var(--surface); border: 1px solid var(--border);
+      border-radius: 14px; font-family: 'DM Sans', sans-serif; font-size: 15px;
+      color: var(--muted); cursor: pointer; transition: all .25s;
+    }
+    .cancel-btn:hover { border-color: rgba(255,255,255,0.2); color: var(--text); }
+    .delete-btn {
+      flex: 2; padding: 14px;
+      background: linear-gradient(135deg, #f87171, #dc2626);
+      border: none; border-radius: 14px;
+      font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 500;
+      color: #fff; cursor: pointer; transition: all .3s cubic-bezier(.16,1,.3,1);
+      box-shadow: 0 4px 24px rgba(248,113,113,0.3); position: relative; overflow: hidden;
+      opacity: .4; pointer-events: none;
+    }
+    .delete-btn.ready { opacity: 1; pointer-events: auto; }
+    .delete-btn::before {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.15) 50%, transparent 70%);
+      transform: translateX(-100%); transition: transform .5s;
+    }
+    .delete-btn:hover::before { transform: translateX(100%); }
+    .delete-btn.ready:hover { transform: translateY(-2px); box-shadow: 0 8px 36px rgba(248,113,113,0.45); }
+
+    /* Deleted state */
+    .deleted-state {
+      display: none; text-align: center; padding: 32px 0;
+    }
+    .deleted-state.visible { display: block; }
+    .deleted-icon { font-size: 48px; margin-bottom: 16px; }
+    .deleted-state h3 { font-family: 'Playfair Display', serif; font-size: 22px; color: var(--text); margin-bottom: 8px; }
+    .deleted-state p { font-size: 14px; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <a href="index.html" class="back-link">← Back to Home</a>
+    <div class="page-badge">✕ Danger Zone</div>
+    <h1>Delete <span>Course</span></h1>
+    <p class="subtitle">Search for a course to permanently remove it from the system.</p>
+
+    <div class="lookup-wrap">
+      <input type="text" id="lookupInput" placeholder="Enter course code, e.g. CS101"/>
+      <button class="lookup-btn" onclick="lookupCourse()">Find Course</button>
+    </div>
+
+    <div class="preview" id="preview">
+      <div class="course-preview-card">
+        <div class="cp-top">
+          <span class="cp-name" id="cp-name">Introduction to Computer Science</span>
+          <span class="cp-code" id="cp-code">CS101</span>
+        </div>
+        <div class="cp-meta">
+          <span>👤 Dr. Sarah Chen</span>
+          <span>📚 3 Credits</span>
+          <span>🏛 Computer Science</span>
+          <span>🗓 Fall 2025</span>
+        </div>
+      </div>
+
+      <div class="warning-box">
+        <div class="warning-icon">⚠️</div>
+        <div class="warning-text">
+          <strong>This action is irreversible.</strong> Deleting this course will permanently remove all associated data including enrollments, schedules, and grades. This cannot be undone.
+        </div>
+      </div>
+
+      <div class="confirm-field">
+        <label>Type <span id="confirmLabel">"CS101"</span> to confirm deletion</label>
+        <input type="text" id="confirmInput" placeholder="Type course code to confirm" oninput="checkConfirm()"/>
+      </div>
+
+      <div class="btn-row">
+        <button class="cancel-btn" onclick="cancelDelete()">Cancel</button>
+        <button class="delete-btn" id="deleteBtn" onclick="doDelete()">Delete Permanently</button>
+      </div>
+    </div>
+
+    <div class="deleted-state" id="deletedState">
+      <div class="deleted-icon">🗑️</div>
+      <h3>Course Deleted</h3>
+      <p>The course has been permanently removed from the system.</p>
+    </div>
+  </div>
+
+  <script>
+    let courseCode = 'CS101';
+    function lookupCourse() {
+      const v = document.getElementById('lookupInput').value.trim().toUpperCase();
+      if (!v) return;
+      courseCode = v;
+      document.getElementById('cp-code').textContent = v;
+      document.getElementById('cp-name').textContent = v === 'CS101' ? 'Introduction to Computer Science' : 'Course — ' + v;
+      document.getElementById('confirmLabel').textContent = `"${v}"`;
+      document.getElementById('confirmInput').value = '';
+      document.getElementById('deleteBtn').classList.remove('ready');
+      document.getElementById('preview').classList.add('visible');
+      document.getElementById('deletedState').classList.remove('visible');
+    }
+    function checkConfirm() {
+      const v = document.getElementById('confirmInput').value.trim().toUpperCase();
+      const btn = document.getElementById('deleteBtn');
+      v === courseCode ? btn.classList.add('ready') : btn.classList.remove('ready');
+    }
+    function cancelDelete() {
+      document.getElementById('preview').classList.remove('visible');
+      document.getElementById('lookupInput').value = '';
+    }
+    function doDelete() {
+      document.getElementById('preview').classList.remove('visible');
+      document.getElementById('deletedState').classList.add('visible');
+    }
+  </script>
+</body>
+</html>

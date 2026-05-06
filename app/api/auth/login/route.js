@@ -27,7 +27,7 @@ export async function POST(request) {
             );
         }
 
-        const user = users[0]; user
+        const user = users[0];
 
         // 3. Check if the user is disabled.
         if (user.status === 'disabled') {

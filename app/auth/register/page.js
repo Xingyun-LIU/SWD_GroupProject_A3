@@ -1,10 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 
 export default function RegisterPage() {
-    const router = useRouter();
     const [form, setForm] = useState({ username: '', email: '', password: '' });
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
@@ -29,7 +27,7 @@ export default function RegisterPage() {
             } else {
                 setError(data.error || 'Registration failed.');
             }
-        } catch (err) {
+        } catch {
             setError('Something went wrong. Please try again.');
         }
     };

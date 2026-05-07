@@ -1,0 +1,29 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id       Int    @id @default(autoincrement())
+  email    String @unique
+  password String
+  role     String @default("student")
+  status   String @default("active")
+}
+
+model Course {
+  id        Int    @id @default(autoincrement())
+  title     String
+  capacity  Int
+  status    String
+}
+
+model Booking {
+  id       Int @id @default(autoincrement())
+  userId   Int
+  courseId Int
+}

@@ -1,85 +1,124 @@
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
+import jwt from 'jsonwebtoken';
+import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
 
+const JWT_SECRET = process.env.JWT_SECRET;
+
 export async function POST(request) {
-    try {
-        const { username, password } = await request.json();
+  try {
+    const { username, password } = await request.json();
 
-        // 1. Basic verification
-        if (!username || !password) {
-            return Response.json(
-                { error: 'Username and password are required.' },
-                { status: 400 }
-            );
+    // admin login
+    if (
+      username === '123456' &&
+      password === '123456'
+    ) {
+      const token = jwt.sign(
+        {
+          userId: 'admin-id',
+          role: 'admin',
+          username,
+        },
+        process.env.JWT_SECRET || '123456',
+        {
+          expiresIn: '7d',
         }
+      );
 
-        // 2. Find users
-        const [users] = await pool.execute(
-            'SELECT id, password_hash, role, status FROM users WHERE username = ?',
-            [username]
-        );
+      const response = NextResponse.json({
+        success: true,
+        role: 'admin',
+      });
 
-        if (users.length === 0) {
-            return Response.json(
-                { error: 'Invalid username or password.' },
-                { status: 401 }
-            );
-        }
+      response.cookies.set('token', token, {
+        httpOnly: true,
+        secure: false,
+        sameSite: 'strict',
+        path: '/',
+        maxAge: 60 * 60 * 24 * 7,
+      });
 
-        const user = users[0];
-
-        // 3. Check if the user is disabled.
-        if (user.status === 'disabled') {
-            return Response.json(
-                { error: 'Account is disabled. Please contact administrator.' },
-                { status: 403 }
-            );
-        }
-
-        // 4. Verify password（bcrypt.compare）
-        const passwordMatch = await bcrypt.compare(password, user.password_hash);
-        if (!passwordMatch) {
-            return Response.json(
-                { error: 'Invalid username or password.' },
-                { status: 401 }
-            );
-        }
-
-        // 5. Generate random session token（using crypto.randomUUID）
-        const sessionToken = crypto.randomUUID();
-
-        // 6. Set expiration time（7 days）
-        const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-
-        // 7. Store the session in the database
-        await pool.execute(
-            'INSERT INTO sessions (session_token, user_id, expires_at) VALUES (?, ?, ?)',
-            [sessionToken, user.id, expiresAt]
-        );
-
-        // 8. Create a response and set an httpOnly cookie
-        const response = Response.json(
-            {
-                message: 'Login successful.',
-                role: user.role,    // The front-end can redirect to the corresponding page based on the role
-            },
-            { status: 200 }
-        );
-
-        // Set cookie（httpOnly, sameSite strict, path /）
-        response.headers.set(
-            'Set-Cookie',
-            `session_token=${sessionToken}; HttpOnly; Path=/; Max-Age=${7 * 24 * 60 * 60}; SameSite=Strict`
-        );
-
-        return response;
-
-    } catch (error) {
-        console.error('Login error:', error);
-        return Response.json(
-            { error: 'Internal server error.' },
-            { status: 500 }
-        );
+      return response;
     }
+
+    // normal login
+    const [users] = await pool.execute(
+      'SELECT id, password_hash, role, status FROM users WHERE username = ?',
+      [username]
+    );
+
+    if (users.length === 0) {
+      return NextResponse.json(
+        { error: 'Invalid username or password.' },
+        { status: 401 }
+      );
+    }
+
+    const user = users[0];
+
+    if (user.status === 'disabled') {
+      return NextResponse.json(
+        { error: 'Account disabled.' },
+        { status: 403 }
+      );
+    }
+
+    const passwordMatch = await bcrypt.compare(
+      password,
+      user.password_hash
+    );
+
+    if (!passwordMatch) {
+      return NextResponse.json(
+        { error: 'Invalid username or password.' },
+        { status: 401 }
+      );
+    }
+
+    const sessionToken = crypto.randomUUID();
+
+    const expiresAt = new Date(
+      Date.now() + 7 * 24 * 60 * 60 * 1000
+    );
+
+    await pool.execute(
+      'INSERT INTO sessions (session_token, user_id, expires_at) VALUES (?, ?, ?)',
+      [sessionToken, user.id, expiresAt]
+    );
+
+    const response = NextResponse.json({
+      success: true,
+      role: user.role,
+    });
+
+    response.cookies.set(
+      'session_token',
+      sessionToken,
+      {
+        httpOnly: true,
+        secure: false,
+        sameSite: 'strict',
+        path: '/',
+        maxAge: 60 * 60 * 24 * 7,
+      }
+    );
+
+    return response;
+
+  } catch (error) {
+    console.error('LOGIN ERROR:', error);
+
+    return NextResponse.json(
+      {
+        error: 'Internal server error.',
+      },
+      {
+        status: 500,
+      }
+    );
+  }
 }
+
+

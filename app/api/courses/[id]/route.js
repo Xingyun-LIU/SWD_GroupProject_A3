@@ -50,3 +50,49 @@ export async function GET(request, { params }) {
         );
     }
 }
+/*delete */
+export async function DELETE(
+  req,
+  { params }
+) {
+  try {
+    await verifyAdmin(req)
+
+    const bookingCount = await prisma.booking.count({
+      where: {
+        courseId: params.id,
+        status: "booked",
+      },
+    })
+
+    if (bookingCount > 0) {
+      const cancelled = await prisma.course.update({
+        where: {
+          id: params.id,
+        },
+
+        data: {
+          status: "cancelled",
+        },
+      })
+
+      return success({
+        message:
+          "Course has bookings, status changed to cancelled",
+        cancelled,
+      })
+    }
+
+    await prisma.course.delete({
+      where: {
+        id: params.id,
+      },
+    })
+
+    return success({
+      message: "Course deleted successfully",
+    })
+  } catch (err) { 
+    return error(err.message, 401)
+  }
+}

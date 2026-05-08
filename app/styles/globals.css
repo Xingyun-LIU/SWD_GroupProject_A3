@@ -1,7 +1,6 @@
-/* ============================================
-   ADMIN PANEL — LUXURY DARK THEME
-   Obsidian Glass Design System
-   ============================================ */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=JetBrains+Mono:wght@300;400;500&display=swap');
 

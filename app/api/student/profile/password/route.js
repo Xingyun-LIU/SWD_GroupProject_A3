@@ -1,4 +1,4 @@
-// Student switch their own password
+// Allow a student to change their own password.
 
 import pool from '@/lib/db';
 import bcrypt from 'bcryptjs';
@@ -7,7 +7,7 @@ import { isValidPassword } from '@/lib/validation';
 // PUT /api/student/profile/password
 export async function PUT(request) {
     try {
-        //read the session_token from the cookie
+        // Read the session token from the cookie.
         const cookieHeader = request.headers.get('cookie') || '';
         const tokenMatch = cookieHeader.match(/session_token=([^;]+)/);
         const token = tokenMatch ? tokenMatch[1] : null;
@@ -16,7 +16,7 @@ export async function PUT(request) {
             return Response.json({ error: 'Not authenticated.' }, { status: 401 });
         }
 
-        //find the current user using the session_token
+        // Load the current student and their password hash from the session.
         const [sessionRows] = await pool.execute(
             `SELECT users.id, users.role, users.password_hash FROM sessions
              JOIN users ON sessions.user_id = users.id
@@ -34,7 +34,7 @@ export async function PUT(request) {
             return Response.json({ error: 'Access denied.' }, { status: 403 });
         }
 
-        //Get currentPassword and newPassword from request body
+        // Read the old and new password from the request body.
         const { currentPassword, newPassword } = await request.json();
 
         if (!currentPassword || !newPassword) {
@@ -49,13 +49,13 @@ export async function PUT(request) {
             return Response.json({ error: 'New password must be 6-100 characters and include both letters and numbers.' }, { status: 400 });
         }
 
-        //Verify current password
+        // Verify the current password before saving the new one.
         const isMatch = await bcrypt.compare(currentPassword, user.password_hash);
         if (!isMatch) {
             return Response.json({ error: 'Current password is incorrect.' }, { status: 400 });
         }
 
-        //Hash the new password before saving
+        // Hash the new password before saving it.
         const hashedPassword = await bcrypt.hash(newPassword, 10);
 
         await pool.execute(

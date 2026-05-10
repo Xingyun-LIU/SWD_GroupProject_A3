@@ -1,4 +1,4 @@
-// Get the current student's own courses reservation 
+// Show the current student's upcoming course reservations.
 'use client';
 
 import { useEffect, useState } from 'react';

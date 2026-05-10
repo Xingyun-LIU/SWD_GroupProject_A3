@@ -1,4 +1,4 @@
-// Find user with the session_token and get his bookings.
+// Return bookings for the current student.
 
 import pool from '@/lib/db';
 
@@ -7,6 +7,7 @@ export async function GET(request) {
         const { searchParams } = new URL(request.url);
         const type = searchParams.get('type');
 
+        // Read the session token from the cookie.
         const cookieHeader = request.headers.get('cookie') || '';
         const tokenMatch = cookieHeader.match(/session_token=([^;]+)/);
         const token = tokenMatch ? tokenMatch[1] : null;
@@ -18,6 +19,7 @@ export async function GET(request) {
             );
         }
 
+        // Load the current student from the active session.
         const [sessionRows] = await pool.execute(
             `SELECT users.id, users.role
              FROM sessions
@@ -64,6 +66,7 @@ export async function GET(request) {
 
         const params = [user.id];
 
+        // Filter bookings into the groups shown on the student pages.
         if (type === 'upcoming') {
             sql += `
                 AND bookings.status = 'confirmed'

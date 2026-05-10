@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs';
 import pool from '@/lib/db';
 
-// Regex
+// Input rules for registration fields.
 const usernameRegex = /^[a-zA-Z0-9_]{3,30}$/;
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d).{6,}$/;
@@ -11,7 +11,7 @@ export async function POST(request) {
     try {
         const { username, email, password } = await request.json();
 
-        // 1. Basic verification
+        // Require all fields before running format checks.
         if (!username || !email || !password) {
             return Response.json(
                 { error: 'All fields are required.' },
@@ -19,7 +19,7 @@ export async function POST(request) {
             );
         }
 
-        // Regex check
+        // Validate username, email, and password format on the server.
         if (!usernameRegex.test(username)) {
             return Response.json(
                 { error: 'Username must be 3-30 characters and can only contain letters, numbers, and underscores.' },
@@ -41,7 +41,7 @@ export async function POST(request) {
             );
         }
 
-        // XSS attack
+        // Reject simple HTML tag input to reduce XSS risk.
         if (unsafeHtmlRegex.test(username) || unsafeHtmlRegex.test(email)) {
             return Response.json(
                 { error: 'HTML tags are not allowed.' },
@@ -49,7 +49,7 @@ export async function POST(request) {
             );
         }
 
-        // 2. Check if the username or email address already exists
+        // Prevent duplicate accounts by checking both username and email.
         const [existingUsers] = await pool.execute(
             'SELECT id FROM users WHERE username = ? OR email = ?',
             [username, email]
@@ -62,16 +62,16 @@ export async function POST(request) {
             );
         }
 
-        // 3. Hash cryptography (10 salt wheels)
+        // Store only the hashed password, never the plain text password.
         const password_hash = await bcrypt.hash(password, 10);
 
-        // 4. Insert a new user (default role is 'student', default status is 'active')
+        // New registered users use the database defaults: student and active.
         const [result] = await pool.execute(
             'INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)',
             [username, email, password_hash]
         );
 
-        // 5. Return successful response
+        // Return the new user id so the caller can confirm the account was created.
         return Response.json(
             { message: 'User registered successfully.', userId: result.insertId },
             { status: 201 }

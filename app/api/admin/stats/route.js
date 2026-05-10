@@ -1,6 +1,6 @@
 import pool from '@/lib/db';
 
-// Protect /api/admin 
+// Check that the request belongs to an active admin session.
 async function verifyAdmin(request) {
     const cookieHeader = request.headers.get('cookie') || '';
     const sessionMatch = cookieHeader.match(/(?:^|;\s*)session_token=([^;]+)/);
@@ -25,6 +25,7 @@ async function verifyAdmin(request) {
 export async function GET(request) {
     try {
 
+        // Dashboard statistics are admin-only.
         const admin = await verifyAdmin(request);
 
         if (!admin) {

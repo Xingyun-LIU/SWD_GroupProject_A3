@@ -1,17 +1,31 @@
 import Navbar from '@/components/Navbar';
+import { DM_Sans, JetBrains_Mono, Playfair_Display } from 'next/font/google';
 import './styles/globals.css';
+
+const displayFont = Playfair_Display({
+    subsets: ['latin'],
+    variable: '--font-display-loaded',
+    display: 'swap',
+});
+
+const bodyFont = DM_Sans({
+    subsets: ['latin'],
+    variable: '--font-body-loaded',
+    display: 'swap',
+});
+
+const monoFont = JetBrains_Mono({
+    subsets: ['latin'],
+    variable: '--font-mono-loaded',
+    display: 'swap',
+});
 
 export default function RootLayout({ children }) {
     return (
-        <html lang="en">
-            <head>
-                <link rel="preconnect" href="https://fonts.googleapis.com" />
-                <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-                <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
-            </head>
+        <html lang="en" className={`${displayFont.variable} ${bodyFont.variable} ${monoFont.variable}`}>
             <body>
                 <Navbar />
-                <main style={{ padding: '20px' }}>
+                <main className="app-main">
                     {children}
                 </main>
             </body>

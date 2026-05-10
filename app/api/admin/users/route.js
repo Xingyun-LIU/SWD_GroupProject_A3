@@ -1,6 +1,7 @@
 import pool from '@/lib/db';
 import { isSafeText } from '@/lib/validation';
 
+// Check that the request belongs to an active admin session.
 async function verifyAdmin(request) {
     const cookieHeader = request.headers.get('cookie') || '';
     const sessionMatch = cookieHeader.match(/(?:^|;\s*)session_token=([^;]+)/);
@@ -22,7 +23,7 @@ async function verifyAdmin(request) {
     return rows[0];
 }
 
-// GET /api/admin/users
+// Return users for the admin user management page.
 export async function GET(request) {
     try {
 

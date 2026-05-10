@@ -35,7 +35,7 @@ export default function CoursesPage() {
         fetchCourses();
     }, []);
 
-    // Filter Courses by title, description or instractor
+    // Filter courses by title, description, or instructor.
     const filteredCourses = courses.filter((course) => {
         const keyword = search.toLowerCase();
 

@@ -1,6 +1,7 @@
 import pool from '@/lib/db';
 import { isSafeText, validateCourseInput } from '@/lib/validation';
 
+// Check that the request belongs to an active admin session.
 async function verifyAdmin(request) {
     const cookieHeader = request.headers.get('cookie') || '';
     const sessionMatch = cookieHeader.match(/(?:^|;\s*)session_token=([^;]+)/);
@@ -100,7 +101,7 @@ export async function GET(request) {
 // POST /api/admin/courses
 export async function POST(request) {
     try {
-        // Authenticate admin user
+        // Authenticate the admin before creating a course.
         const cookieHeader = request.headers.get('cookie') || '';
         const sessionMatch = cookieHeader.match(/(?:^|;\s*)session_token=([^;]+)/);
         const sessionToken = sessionMatch ? sessionMatch[1] : null;

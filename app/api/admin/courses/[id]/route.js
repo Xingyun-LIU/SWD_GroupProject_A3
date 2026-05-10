@@ -1,7 +1,7 @@
 import pool from '@/lib/db';
 import { isPositiveInteger, validateCourseInput } from '@/lib/validation';
 
-// Helper function to verify admin session
+// Check that the request belongs to an active admin session.
 async function verifyAdmin(request) {
     const cookieHeader = request.headers.get('cookie') || '';
     const sessionMatch = cookieHeader.match(/(?:^|;\s*)session_token=([^;]+)/);
@@ -71,7 +71,7 @@ export async function PUT(request, { params }) {
             return Response.json({ error: 'Invalid course id.' }, { status: 400 });
         }
 
-        // Check is the course exist
+        // Check that the course exists before updating it.
         const [existing] = await pool.execute(
             'SELECT id, enrolled_count FROM courses WHERE id = ?',
             [id]
@@ -92,7 +92,7 @@ export async function PUT(request, { params }) {
 
         const course = validation.value;
 
-        // capacity cannot be less than enrolled_count
+        // Capacity cannot be lower than the number of enrolled students.
         if (course.capacity < enrolledCount) {
             return Response.json({
                 error: `capacity cannot be less than current enrolled count (${enrolledCount}).`

@@ -9,7 +9,7 @@ export async function POST(request) {
   try {
     const { username, password } = await request.json();
 
-    // Basic varification
+    // Require credentials before checking the database.
     if (!username || !password) {
       return Response.json(
         { error: 'Username and password are required.' },
@@ -17,14 +17,14 @@ export async function POST(request) {
       );
     }
 
-    // Format check by regex
+    // Validate the login identifier before using it in a query.
     if (!loginIdentifierRegex.test(username)) {
       return Response.json(
         { error: 'Invalid username or email format.' },
         { status: 400 }
       );
     }
-    // XSS attack
+    // Reject simple HTML tag input to reduce XSS risk.
     if (unsafeHtmlRegex.test(username)) {
       return Response.json(
         { error: 'HTML tags are not allowed.' },
@@ -39,7 +39,7 @@ export async function POST(request) {
       );
     }
 
-    // You can login with username or email
+    // Allow login with either username or email.
     const [users] = await pool.execute(
       'SELECT id, password_hash, role, status FROM users WHERE username = ? OR email = ?',
       [username, username]
@@ -72,6 +72,7 @@ export async function POST(request) {
     const sessionToken = crypto.randomUUID();
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
+    // Save the server-side session and send the token as an HttpOnly cookie.
     await pool.execute(
       'INSERT INTO sessions (session_token, user_id, expires_at) VALUES (?, ?, ?)',
       [sessionToken, user.id, expiresAt]

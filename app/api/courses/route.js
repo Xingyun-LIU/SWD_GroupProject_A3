@@ -1,5 +1,6 @@
 import pool from '@/lib/db';
 
+// Return the public course list.
 export async function GET() {
     try {
         const [courses] = await pool.execute(`

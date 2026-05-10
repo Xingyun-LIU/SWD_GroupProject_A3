@@ -1,10 +1,10 @@
 import pool from '@/lib/db';
 import { isPositiveInteger } from '@/lib/validation';
 
-// Student reserve courses
+// Create a booking for the current student.
 export async function POST(request) {
     try {
-        //Read the session_token from the cookie
+        // Read the session token from the cookie.
         const cookieHeader = request.headers.get('cookie') || '';
         const tokenMatch = cookieHeader.match(/session_token=([^;]+)/);
         const token = tokenMatch ? tokenMatch[1] : null;
@@ -13,7 +13,7 @@ export async function POST(request) {
             return Response.json({ error: 'Not authenticated.' }, { status: 401 });
         }
 
-        //Find the current user using the session_token
+        // Load the current user from the active session.
         const [sessionRows] = await pool.execute(
             `SELECT users.id, users.role FROM sessions
              JOIN users ON sessions.user_id = users.id
@@ -31,7 +31,7 @@ export async function POST(request) {
             return Response.json({ error: 'Only students can book courses.' }, { status: 403 });
         }
 
-        //Get courseId from request body
+        // Read and validate the course id from the request body.
         const { courseId } = await request.json();
 
         if (!courseId) {
@@ -42,7 +42,7 @@ export async function POST(request) {
             return Response.json({ error: 'Invalid courseId.' }, { status: 400 });
         }
 
-        //Find the course by courseId
+        // Load the course before checking availability.
         const [courseRows] = await pool.execute(
             `SELECT id, status, capacity, enrolled_count, start_time, end_time
              FROM courses WHERE id = ?`,
@@ -59,12 +59,12 @@ export async function POST(request) {
             return Response.json({ error: 'Course is not available for booking.' }, { status: 400 });
         }
 
-        // Check if the course is already full
+        // Stop booking when the course has no remaining seats.
         if (course.enrolled_count >= course.capacity) {
             return Response.json({ error: 'Course is full.' }, { status: 400 });
         }
 
-        // Check if the student has already booked this course
+        // Prevent duplicate active bookings for the same course.
         const [existingRows] = await pool.execute(
             `SELECT id FROM bookings
              WHERE user_id = ? AND course_id = ? AND status = 'confirmed'`,
@@ -75,7 +75,7 @@ export async function POST(request) {
             return Response.json({ error: 'You have already booked this course.' }, { status: 400 });
         }
 
-        //Check for time conflicts: see if the student has any other confirmed bookings that overlap with this course
+        // Prevent overlapping confirmed bookings for published courses.
         const [conflictRows] = await pool.execute(
             `SELECT bookings.id FROM bookings
              JOIN courses ON bookings.course_id = courses.id
@@ -91,7 +91,7 @@ export async function POST(request) {
             return Response.json({ error: 'This course conflicts with another booking.' }, { status: 400 });
         }
 
-        //Create the booking (insert into bookings table with status 'confirmed')
+        // Save the booking and increase the course enrolment count.
         await pool.execute(
             `INSERT INTO bookings (user_id, course_id, status) VALUES (?, ?, 'confirmed')`,
             [user.id, courseId]

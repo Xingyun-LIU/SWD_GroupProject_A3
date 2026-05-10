@@ -1,8 +1,7 @@
 import pool from '@/lib/db';
 import { isPositiveInteger } from '@/lib/validation';
 
-// Return the details of the published course
-// folder [id] will as the parameter of the {params}
+// Return one published course for the public course detail page.
 export async function GET(request, { params }) {
     try {
 
@@ -41,7 +40,7 @@ export async function GET(request, { params }) {
 
         if (courses.length === 0) {
             return Response.json(
-                { error: 'Coures not found.' },
+                { error: 'Course not found.' },
                 { status: 404 }
             );
         }

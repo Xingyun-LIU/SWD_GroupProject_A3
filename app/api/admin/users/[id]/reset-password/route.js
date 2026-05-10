@@ -5,7 +5,7 @@ import { isPositiveInteger, isValidPassword } from '@/lib/validation';
 // POST /api/admin/users/[id]/reset-password
 export async function POST(request, { params }) {
     try {
-        //check admin session
+        // Only an admin can reset another user's password.
         const cookieHeader = request.headers.get('cookie') || '';
         const sessionMatch = cookieHeader.match(/(?:^|;\s*)session_token=([^;]+)/);
         const sessionToken = sessionMatch ? sessionMatch[1] : null;
@@ -32,12 +32,12 @@ export async function POST(request, { params }) {
 
         const { newPassword } = await request.json();
 
-        // check new password
+        // Validate the new password before hashing it.
         if (!isValidPassword(newPassword)) {
             return Response.json({ error: 'newPassword must be 6-100 characters and include both letters and numbers.' }, { status: 400 });
         }
 
-        // check target user exists
+        // Check that the target user exists.
         const [targetRows] = await pool.execute(
             'SELECT id FROM users WHERE id = ?',
             [id]
@@ -47,7 +47,7 @@ export async function POST(request, { params }) {
             return Response.json({ error: 'User not found.' }, { status: 404 });
         }
 
-        // hash the new password
+        // Store only the hashed password.
         const hashedPassword = await bcrypt.hash(newPassword, 10);
 
         await pool.execute(

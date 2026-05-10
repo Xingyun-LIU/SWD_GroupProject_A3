@@ -1,4 +1,4 @@
-// Delete bookings.
+// Cancel an existing student booking.
 
 import pool from '@/lib/db';
 import { isPositiveInteger } from '@/lib/validation';
@@ -12,7 +12,7 @@ export async function PUT(request, { params }) {
             return Response.json({ error: 'Invalid booking id.' }, { status: 400 });
         }
 
-        //read the session_token from the cookie
+        // Read the session token from the cookie.
         const cookieHeader = request.headers.get('cookie') || '';
         const tokenMatch = cookieHeader.match(/session_token=([^;]+)/);
         const token = tokenMatch ? tokenMatch[1] : null;
@@ -21,7 +21,7 @@ export async function PUT(request, { params }) {
             return Response.json({ error: 'Not authenticated.' }, { status: 401 });
         }
 
-        //find the current user using the session_token
+        // Load the current user from the active session.
         const [sessionRows] = await pool.execute(
             `SELECT users.id, users.role FROM sessions
              JOIN users ON sessions.user_id = users.id
@@ -39,7 +39,7 @@ export async function PUT(request, { params }) {
             return Response.json({ error: 'Access denied.' }, { status: 403 });
         }
 
-        //find this booking, also join courses to get course start time
+        // Load the booking and its course start time for cancellation rules.
         const [bookingRows] = await pool.execute(
             `SELECT bookings.id, bookings.status, bookings.user_id,
                     courses.start_time
@@ -55,17 +55,17 @@ export async function PUT(request, { params }) {
 
         const booking = bookingRows[0];
 
-        //only allow cancel own booking
+        // Students can cancel only their own bookings.
         if (booking.user_id !== user.id) {
             return Response.json({ error: 'Access denied.' }, { status: 403 });
         }
 
-        //only allow cancel confirmed booking
+        // Only confirmed bookings can be cancelled.
         if (booking.status !== 'confirmed') {
             return Response.json({ error: 'Booking is already cancelled.' }, { status: 400 });
         }
 
-        //only allow cancel before 24 hours of course start
+        // Disallow cancellation within 24 hours of the course start time.
         const now = new Date();
         const startTime = new Date(booking.start_time);
         const hoursUntilStart = (startTime - now) / (1000 * 60 * 60);
@@ -77,7 +77,7 @@ export async function PUT(request, { params }) {
             );
         }
 
-        //Cancel the booking (update booking status to 'cancelled', set cancelled_at to now, and enrolled_count - 1)
+        // Mark the booking as cancelled and return one seat to the course.
         await pool.execute(
             `UPDATE bookings SET status = 'cancelled', cancelled_at = NOW() WHERE id = ?`,
             [id]

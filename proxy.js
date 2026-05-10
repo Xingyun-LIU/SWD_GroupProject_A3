@@ -4,7 +4,7 @@ export async function proxy(request) {
     const { pathname } = request.nextUrl;
 
     try {
-        // In server side, wo can only use absolute path
+        // Server-side redirects need absolute URLs.
         const meUrl = new URL('/api/auth/this', request.url);
         const response = await fetch(meUrl, {
             headers: {
@@ -20,7 +20,7 @@ export async function proxy(request) {
 
         const user = await response.json();
 
-        // Role in student can't get into admin, so as admin
+        // Redirect logged-in users away from pages for the wrong role.
         if (pathname.startsWith('/admin') && user.role !== 'admin') {
             const redirectTo = user.role === 'student' ? '/student/dashboard' : '/';
             return NextResponse.redirect(new URL(redirectTo, request.url));
@@ -34,7 +34,7 @@ export async function proxy(request) {
         requestHeaders.set('x-user-id', user.id);
         requestHeaders.set('x-user-role', user.role);
 
-        // Use NextResponse.next() to go pass, use NextResponse.redirect() to redirect
+        // Continue when the user has the correct role.
         return NextResponse.next({
             request: {
                 headers: requestHeaders,

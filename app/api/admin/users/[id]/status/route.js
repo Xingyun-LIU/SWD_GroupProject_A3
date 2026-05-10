@@ -4,7 +4,7 @@ import { isPositiveInteger } from '@/lib/validation';
 // PUT /api/admin/users/[id]/status
 export async function PUT(request, { params }) {
     try {
-        //check admin session
+        // Only an admin can enable or disable user accounts.
         const cookieHeader = request.headers.get('cookie') || '';
         const sessionMatch = cookieHeader.match(/(?:^|;\s*)session_token=([^;]+)/);
         const sessionToken = sessionMatch ? sessionMatch[1] : null;
@@ -31,12 +31,12 @@ export async function PUT(request, { params }) {
 
         const { status } = await request.json();
 
-        //check status value
+        // Accept only the statuses defined in the users table.
         if (!['active', 'disabled'].includes(status)) {
             return Response.json({ error: 'status must be "active" or "disabled".' }, { status: 400 });
         }
 
-        // check target user exists
+        // Check that the target user exists.
         const [targetRows] = await pool.execute(
             'SELECT id, role FROM users WHERE id = ?',
             [id]
@@ -46,7 +46,7 @@ export async function PUT(request, { params }) {
             return Response.json({ error: 'User not found.' }, { status: 404 });
         }
 
-        //if disabling an admin, check if it's the last active admin
+        // Keep at least one active admin account in the system.
         if (status === 'disabled' && targetRows[0].role === 'admin') {
             const [activeAdmins] = await pool.execute(
                 `SELECT COUNT(*) as count FROM users WHERE role = 'admin' AND status = 'active'`

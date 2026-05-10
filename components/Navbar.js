@@ -7,10 +7,10 @@ export default function Navbar() {
 
     const router = useRouter();
     const pathname = usePathname();
-    const [user, setUser] = useState(null); // {id, username, role} || null
+    const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    // Get user information
+    // Load the current user so the navigation can match their role.
     useEffect(() => {
         async function fetchUser() {
             try {
@@ -28,7 +28,7 @@ export default function Navbar() {
             }
         }
         fetchUser();
-    }, [pathname]); // Fetch user state again when route change
+    }, [pathname]);
 
     const handleLogout = async () => {
         await fetch('/api/auth/logout', { method: 'POST' });
@@ -41,7 +41,7 @@ export default function Navbar() {
         return active ? 'site-nav-link active' : 'site-nav-link';
     };
 
-    // Show loading bar when loading
+    // Keep the header stable while the session request is loading.
     if (loading) {
         return (
             <nav className="site-nav">

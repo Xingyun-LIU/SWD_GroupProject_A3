@@ -2,6 +2,7 @@ import pool from '@/lib/db';
 
 export async function GET(request) {
     try {
+        // Read the current session token from the HttpOnly cookie.
         const cookieHeader = request.headers.get('cookie') || '';
         const sessionMatch = cookieHeader.match(/(?:^|;\s*)session_token=([^;]+)/);
         const sessionToken = sessionMatch ? sessionMatch[1] : null;
@@ -10,6 +11,7 @@ export async function GET(request) {
             return Response.json({ error: 'Not authenticated.' }, { status: 401 });
         }
 
+        // Join sessions and users so the client can render role-based navigation.
         const [rows] = await pool.execute(
             `SELECT users.id, users.username, users.email, users.role, users.status, sessions.expires_at
              FROM sessions

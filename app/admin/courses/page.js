@@ -1,35 +1,55 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 
 export default function AdminCoursesPage() {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  //state for filters
   const [search, setSearch] = useState('');
+  const [category, setCategory] = useState('');
   const [status, setStatus] = useState('');
+  const [date, setDate] = useState('');
+
+  //loadCourses
+  const loadCourses = useCallback(async () => {
+    try {
+      setLoading(true);
+      
+      //build query params based on filters
+      const params = new URLSearchParams();
+      if (search) params.append('search', search);
+      if (category) params.append('category', category);
+      if (status) params.append('status', status);
+      if (date) params.append('date', date);
+
+      const res = await fetch(`/api/admin/courses?${params.toString()}`);
+
+      if (!res.ok) {
+        setCourses([]);
+        return;
+      }
+
+      const data = await res.json();
+      // if API returns { courses: [...] } or just [...]
+      setCourses(data.courses || data || []);
+    } catch (error) {
+      console.error("Failed to fetch courses:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [search, category, status, date]); //will change when any filter changes
 
   useEffect(() => {
-    async function loadCourses() {
-      try {
-        setLoading(true);
+    // debounce loading to avoid too many requests when typing/changing filters
+    const handler = setTimeout(() => {
+      loadCourses();
+    }, 300); 
 
-        const res = await fetch('/api/admin/courses');
-
-        if (!res.ok) {
-          setCourses([]);
-          return;
-        }
-
-        const data = await res.json();
-        setCourses(data.courses || []);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    loadCourses();
-  }, []);
+    return () => clearTimeout(handler);
+  }, [loadCourses]);
 
   async function deleteCourse(id) {
     const ok = confirm('Delete this course?');
@@ -44,49 +64,53 @@ export default function AdminCoursesPage() {
       return;
     }
 
-    setCourses((prev) => prev.filter((c) => c.id !== id));
+    //refresh list after deletion
+    loadCourses();
   }
-
-  const filteredCourses = courses.filter((c) => {
-    const k = search.toLowerCase();
-
-    const matchSearch =
-      c.title?.toLowerCase().includes(k) ||
-      c.instructor?.toLowerCase().includes(k) ||
-      c.category?.toLowerCase().includes(k);
-
-    const matchStatus = status ? c.status === status : true;
-
-    return matchSearch && matchStatus;
-  });
 
   return (
     <div className="page-content">
-
-      {/* HEADER */}
       <div className="panel-header">
         <div className="panel-title">
           <span className="panel-title-dot" />
-          Course Management
+          Course Management (Admin)
         </div>
       </div>
 
-      {/* FILTER BAR */}
+      {/* FILTERS */}
       <div className="glass-panel" style={{ marginBottom: 16 }}>
-        <div className="toolbar">
-
-          {/* search */}
-          <div className="search-bar">
+        <div className="toolbar" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+          
+          {/* Search */}
+          <div className="search-bar" style={{ flex: 1 }}>
             <span className="search-icon">🔎</span>
             <input
               type="text"
-              placeholder="Search title, instructor, category..."
+              placeholder="Search title, instructor..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
 
-          {/* status filter */}
+          {/* Category Filter  */}
+          <input 
+            type="text"
+            className="form-select"
+            placeholder="Category..."
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            style={{ width: '150px' }}
+          />
+
+          {/* Date Filter */}
+          <input 
+            type="date"
+            className="form-select"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+          />
+
+          {/* Status Filter */}
           <select
             className="form-select"
             value={status}
@@ -98,32 +122,22 @@ export default function AdminCoursesPage() {
             <option value="cancelled">Cancelled</option>
           </select>
 
-          {/* action */}
           <Link className="btn btn-primary" href="/admin/courses/new">
             + New Course
           </Link>
-
         </div>
       </div>
 
-      {/* TABLE */}
       <div className="glass-panel">
-
         {loading ? (
-          <div className="loading-spinner">
-            <div className="spinner" />
-          </div>
-        ) : filteredCourses.length === 0 ? (
+          <div className="loading-spinner"><div className="spinner" /></div>
+        ) : courses.length === 0 ? (
           <div className="empty-state">
             <div className="empty-icon">📚</div>
             <div className="empty-title">No courses found</div>
-            <div className="empty-desc">
-              Try changing filters or create a new course
-            </div>
           </div>
         ) : (
           <table className="data-table">
-
             <thead>
               <tr>
                 <th>ID</th>
@@ -132,73 +146,39 @@ export default function AdminCoursesPage() {
                 <th>Instructor</th>
                 <th>Start Time</th>
                 <th>Capacity</th>
-                <th>Enrolled</th>
-                <th>Remaining</th>
                 <th>Status</th>
                 <th style={{ textAlign: 'right' }}>Actions</th>
               </tr>
             </thead>
-
             <tbody>
-              {filteredCourses.map((c) => (
+              {courses.map((c) => (
                 <tr key={c.id}>
-
-                  <td className="td-mono">
-                    <span className="id-chip">{c.id}</span>
-                  </td>
-
-                  <td className="td-primary">
-                    {c.title}
-                  </td>
-
+                  <td className="td-mono"><span className="id-chip">{c.id}</span></td>
+                  <td className="td-primary">{c.title}</td>
                   <td>{c.category || '-'}</td>
-
                   <td>{c.instructor}</td>
-
                   <td className="td-mono">
-                    {c.start_time
-                      ? new Date(c.start_time).toLocaleString()
-                      : '-'}
+                    {c.start_time ? new Date(c.start_time).toLocaleString() : '-'}
                   </td>
-
                   <td>{c.capacity}</td>
-
-                  <td>{c.enrolled_count}</td>
-
-                  <td>{c.remaining_places}</td>
-
                   <td>
                     <span className={`badge badge-${c.status}`}>
                       {c.status}
                     </span>
                   </td>
-
                   <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
-
-                    <Link
-                      className="btn btn-ghost btn-sm"
-                      href={`/admin/courses/${c.id}/edit`}
-                    >
+                    <Link className="btn btn-ghost btn-sm" href={`/admin/courses/${c.id}/edit`}>
                       Edit
                     </Link>
-
-                    <button
-                      className="btn btn-danger btn-sm"
-                      onClick={() => deleteCourse(c.id)}
-                      style={{ marginLeft: 8 }}
-                    >
+                    <button className="btn btn-danger btn-sm" onClick={() => deleteCourse(c.id)} style={{ marginLeft: 8 }}>
                       Delete
                     </button>
-
                   </td>
-
                 </tr>
               ))}
             </tbody>
-
           </table>
         )}
-
       </div>
     </div>
   );

@@ -1,3 +1,5 @@
+// Student switch their own password
+
 import pool from '@/lib/db';
 import bcrypt from 'bcryptjs';
 

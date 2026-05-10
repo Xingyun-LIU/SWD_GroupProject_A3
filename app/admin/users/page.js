@@ -6,24 +6,46 @@ export default function UsersPage() {
   const [users, setUsers] = useState([]);
 
   async function loadUsers() {
-    const res = await fetch("/api/admin/users");
-    const data = await res.json();
-    setUsers(data);
+    try {
+      const res = await fetch("/api/admin/users");
+
+      if (!res.ok) {
+        throw new Error("Failed to fetch users");
+      }
+
+      const data = await res.json();
+
+      // 关键修复
+      setUsers(Array.isArray(data.users) ? data.users : []);
+
+    } catch (err) {
+      console.error(err);
+      setUsers([]);
+    }
   }
 
   async function toggleStatus(id, status) {
+    try {
+      await fetch(`/api/admin/users/${id}/status`, {
+        method: "PUT",
 
-    await fetch(`/api/admin/users/${id}/status`, {
-      method: "PUT",
-      body: JSON.stringify({
-        status:
-          status === "active"
-            ? "disabled"
-            : "active",
-      }),
-    });
+        headers: {
+          "Content-Type": "application/json",
+        },
 
-    loadUsers();
+        body: JSON.stringify({
+          status:
+            status === "active"
+              ? "disabled"
+              : "active",
+        }),
+      });
+
+      loadUsers();
+
+    } catch (err) {
+      console.error(err);
+    }
   }
 
   useEffect(() => {
@@ -32,11 +54,9 @@ export default function UsersPage() {
 
   return (
     <div>
-
       <h1>User Management</h1>
 
       <table className="admin-table">
-
         <thead>
           <tr>
             <th>Email</th>
@@ -47,10 +67,8 @@ export default function UsersPage() {
         </thead>
 
         <tbody>
-
           {users.map((u) => (
             <tr key={u.id}>
-
               <td>{u.email}</td>
               <td>{u.role}</td>
               <td>{u.status}</td>
@@ -64,14 +82,10 @@ export default function UsersPage() {
                   Toggle
                 </button>
               </td>
-
             </tr>
           ))}
-
         </tbody>
-
       </table>
-
     </div>
   );
 }

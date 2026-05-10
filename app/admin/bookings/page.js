@@ -15,6 +15,8 @@ export default function BookingsPage() {
 
   async function loadBookings() {
 
+  try {
+
     let url =
       "/api/admin/bookings";
 
@@ -26,8 +28,22 @@ export default function BookingsPage() {
 
     const data = await res.json();
 
-    setBookings(data);
+    console.log(data);
+
+    setBookings(
+      Array.isArray(data.bookings)
+        ? data.bookings
+        : []
+    );
+
+  } catch (err) {
+
+    console.error(err);
+
+    setBookings([]);
+
   }
+}
 
   useEffect(() => {
     loadBookings();
@@ -112,54 +128,53 @@ export default function BookingsPage() {
 
           </thead>
 
-          <tbody>
+         <tbody>
 
-            {bookings.map((b) => (
+  {bookings.map((b) => (
 
-              <tr
-                key={b.id}
-                className="table-row"
-              >
+    <tr
+      key={b.id}
+      className="table-row"
+    >
 
-                <td className="p-5">
-                  {b.user.email}
-                </td>
+      <td className="p-5">
+        {b.student_email}
+      </td>
 
-                <td className="p-5">
-                  {b.course.title}
-                </td>
+      <td className="p-5">
+        {b.course_title}
+      </td>
 
-                <td className="p-5">
+      <td className="p-5">
 
-                  <span
-                    className={`
-                      px-4 py-2 rounded-xl
-                      ${
-                        b.status ===
-                        "confirmed"
-                          ? "bg-green-500/20 text-green-400"
-                          : "bg-red-500/20 text-red-400"
-                      }
-                    `}
-                  >
-                    {b.status}
-                  </span>
+        <span
+          className={`
+            px-4 py-2 rounded-xl
+            ${
+              b.status === "confirmed"
+                ? "bg-green-500/20 text-green-400"
+                : "bg-red-500/20 text-red-400"
+            }
+          `}
+        >
+          {b.status}
+        </span>
 
-                </td>
+      </td>
 
-                <td className="p-5">
+      <td className="p-5">
 
-                  {new Date(
-                    b.createdAt
-                  ).toLocaleString()}
+        {new Date(
+          b.booked_at
+        ).toLocaleString()}
 
-                </td>
+      </td>
 
-              </tr>
+    </tr>
 
-            ))}
+  ))}
 
-          </tbody>
+</tbody>
 
         </table>
 

@@ -1,54 +1,32 @@
-import { prisma } from "@/lib/prisma"
-import { success, error } from "@/lib/response"
-import { verifyAdmin } from "@/lib/auth"
-import { NextRequest } from "next/server"
+import pool from '@/lib/db';
 
-export async function GET(req) {
-  try {
-    await verifyAdmin(req)
+export async function GET() {
+    try {
+        const [[courseRow]] = await pool.execute(
+            'SELECT COUNT(*) as total FROM courses'
+        );
+        const [[publishedRow]] = await pool.execute(
+            "SELECT COUNT(*) as total FROM courses WHERE status = 'published'"
+        );
+        const [[studentRow]] = await pool.execute(
+            "SELECT COUNT(*) as total FROM users WHERE role = 'student'"
+        );
+        const [[bookingRow]] = await pool.execute(
+            'SELECT COUNT(*) as total FROM bookings'
+        );
+        const [[upcomingRow]] = await pool.execute(
+            "SELECT COUNT(*) as total FROM courses WHERE status = 'published' AND start_time > NOW()"
+        );
 
-    const now = new Date()
-
-    const [
-      totalCourses,
-      publishedCourses,
-      totalStudents,
-      totalBookings,
-      upcomingCourses,
-    ] = await Promise.all([
-      prisma.course.count(),
-
-      prisma.course.count({
-        where: {
-          status: "published",
-        },
-      }),
-
-      prisma.user.count({
-        where: {
-          role: "student",
-        },
-      }),
-
-      prisma.booking.count(),
-
-      prisma.course.count({
-        where: {
-          start_time: {
-            gte: now,
-          },
-        },
-      }),
-    ])
-
-    return success({
-      totalCourses,
-      publishedCourses,
-      totalStudents,
-      totalBookings,
-      upcomingCourses,
-    })
-  } catch (err) {
-    return error(err.message, 401)
-  }
+        return Response.json({
+            totalCourses: courseRow.total,
+            publishedCourses: publishedRow.total,
+            totalStudents: studentRow.total,
+            totalBookings: bookingRow.total,
+            upcomingCourses: upcomingRow.total,
+        });
+    } catch (error) {
+        console.error('Stats error:', error);
+        return Response.json({ error: 'Internal server error.' }, { status: 500 });
+    }
 }

@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
 
 export default function RegisterPage() {
@@ -33,43 +34,60 @@ export default function RegisterPage() {
     };
 
     return (
-        <div>
-            <h1>Create an Account</h1>
-            <form onSubmit={handleSubmit}>
-                <div>
-                    <label>Username:</label>
+        <div style={{ maxWidth: 520, margin: '42px auto' }}>
+            <div className="glass-panel" style={{ padding: 28 }}>
+                <p className="home-kicker">Create Account</p>
+                <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '2.2rem', lineHeight: 1.1 }}>
+                    Register
+                </h1>
+                <p style={{ color: 'var(--text-secondary)', marginTop: 8 }}>
+                    Create a student account to browse and book published courses.
+                </p>
+
+                <div className="divider" />
+
+                <form onSubmit={handleSubmit} style={{ display: 'grid', gap: 16 }}>
+                <div className="form-group">
+                    <label className="form-label">Username</label>
                     <input
+                        className="form-input"
                         type="text"
                         value={form.username}
                         onChange={(e) => setForm({ ...form, username: e.target.value })}
                         required
                     />
                 </div>
-                <div>
-                    <label>Email:</label>
+                <div className="form-group">
+                    <label className="form-label">Email</label>
                     <input
+                        className="form-input"
                         type="email"
                         value={form.email}
                         onChange={(e) => setForm({ ...form, email: e.target.value })}
                         required
                     />
                 </div>
-                <div>
-                    <label>Password:</label>
+                <div className="form-group">
+                    <label className="form-label">Password</label>
                     <input
+                        className="form-input"
                         type="password"
                         value={form.password}
                         onChange={(e) => setForm({ ...form, password: e.target.value })}
                         required
                     />
                 </div>
-                <button type="submit">Register</button>
+                <button className="btn btn-primary" type="submit">Register</button>
             </form>
-            {error && <p style={{ color: 'red' }}>{error}</p>}
-            {success && <p style={{ color: 'green' }}>{success}</p>}
-            <p>
-                Already have an account? <a href="/auth/login">Login here</a>
+
+            {error && <p style={{ color: 'var(--ruby)', marginTop: 14 }}>{error}</p>}
+            {success && <p style={{ color: 'var(--emerald)', marginTop: 14 }}>{success}</p>}
+
+            <p style={{ color: 'var(--text-secondary)', marginTop: 18, fontSize: '0.9rem' }}>
+                Already have an account?{' '}
+                <Link className="site-nav-link" href="/auth/login">Login here</Link>
             </p>
+            </div>
         </div>
     );
 }

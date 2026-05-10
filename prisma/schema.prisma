@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"  // 从 postgresql 改成 mysql
   url      = env("DATABASE_URL")
 }
 

@@ -1,84 +1,96 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function CoursesPage() {
     const router = useRouter();
 
-    //Course list
     const [courses, setCourses] = useState([]);
-    //Search keyword
     const [search, setSearch] = useState('');
-    //Category filter
     const [category, setCategory] = useState('');
-    //Loading state
+    const [date, setDate] = useState('');
     const [loading, setLoading] = useState(true);
-    //Error message
     const [error, setError] = useState('');
 
-    //Fetch course list from the backend                
     useEffect(() => {
+        async function fetchCourses() {
+            try {
+                const res = await fetch('/api/courses');
+                const data = await res.json();
+
+                if (!res.ok) {
+                    setError(data.error || 'Failed to load courses.');
+                    return;
+                }
+
+                setCourses(data.courses || []);
+            } catch {
+                setError('Failed to load courses.');
+            } finally {
+                setLoading(false);
+            }
+        }
+
         fetchCourses();
     }, []);
 
-    async function fetchCourses() {
-        try {
-            setLoading(true);
-            const res = await fetch('/api/courses');
-            const data = await res.json();
-
-            if (!res.ok) {
-                setError('Failed to load courses.');
-                return;
-            }
-
-            setCourses(data.courses);
-        } catch (err) {
-            setError('Failed to load courses.');
-        } finally {
-            setLoading(false);
-        }
-    }
-
-    //Filter courses based on search keyword and category
+    // Filter Courses by title, description or instractor
     const filteredCourses = courses.filter((course) => {
+        const keyword = search.toLowerCase();
+
         const matchSearch =
-            course.title.toLowerCase().includes(search.toLowerCase()) ||
-            course.description?.toLowerCase().includes(search.toLowerCase());
-        const matchCategory = category === '' || course.category === category;
-        return matchSearch && matchCategory;
+            course.title?.toLowerCase().includes(keyword) ||
+            course.description?.toLowerCase().includes(keyword) ||
+            course.instructor?.toLowerCase().includes(keyword);
+
+        const matchCategory =
+            category === '' || course.category === category;
+
+        const matchDate =
+            date === '' || course.start_time?.slice(0, 10) === date;
+
+        return matchSearch && matchCategory && matchDate;
     });
 
-    //Get unique categories for the category filter dropdown
-    const categories = [...new Set(courses.map((c) => c.category).filter(Boolean))];
+    const categories = [
+        ...new Set(courses.map((course) => course.category).filter(Boolean)),
+    ];
 
-    if (loading) return <div>Loading...</div>;
-    if (error) return <div>{error}</div>;
+    if (loading) return <p>Loading courses...</p>;
+    if (error) return <p>{error}</p>;
 
     return (
         <div>
             <h1>Courses</h1>
 
-            {/* Search box */}
-            <input
-                type="text"
-                placeholder="Search courses..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-            />
+            <div>
+                <input
+                    type="text"
+                    placeholder="Search by name, description, or instructor"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                />
 
-            {/* Category filter */}
-            <select value={category} onChange={(e) => setCategory(e.target.value)}>
-                <option value="">All Categories</option>
-                {categories.map((cat) => (
-                    <option key={cat} value={cat}>
-                        {cat}
-                    </option>
-                ))}
-            </select>
+                <select
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                >
+                    <option value="">All Categories</option>
+                    {categories.map((cat) => (
+                        <option key={cat} value={cat}>
+                            {cat}
+                        </option>
+                    ))}
+                </select>
 
-            {/* Course list */}
+                <input
+                    type="date"
+                    value={date}
+                    onChange={(e) => setDate(e.target.value)}
+                />
+            </div>
+
             {filteredCourses.length === 0 ? (
                 <p>No courses found.</p>
             ) : (
@@ -87,12 +99,25 @@ export default function CoursesPage() {
                         <div
                             key={course.id}
                             onClick={() => router.push(`/courses/${course.id}`)}
-                            style={{ cursor: 'pointer', border: '1px solid #ccc', margin: '8px', padding: '12px' }}
+                            style={{
+                                cursor: 'pointer',
+                                border: '1px solid #ccc',
+                                margin: '8px',
+                                padding: '12px',
+                            }}
                         >
                             <h2>{course.title}</h2>
                             <p>{course.description}</p>
                             <p>Category: {course.category || 'Uncategorized'}</p>
-                            <p>Status: {course.status === 'published' ? 'Available' : 'Cancelled'}</p>
+                            <p>Instructor: {course.instructor}</p>
+                            <p>
+                                Time:{' '}
+                                {course.start_time
+                                    ? new Date(course.start_time).toLocaleString()
+                                    : '-'}
+                            </p>
+                            <p>Location: {course.location || '-'}</p>
+                            <p>Remaining places: {course.remaining_places}</p>
                         </div>
                     ))}
                 </div>

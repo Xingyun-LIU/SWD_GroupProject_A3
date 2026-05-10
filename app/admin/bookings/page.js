@@ -138,9 +138,9 @@ export default function AdminBookingsPage() {
                   <td>{b.course_title || '-'}</td>
 
                   <td className="td-mono">
-                    {b.start_time
-                      ? new Date(b.start_time).toLocaleString()
-                      : '-'}
+                    {b.course_start_time
+  ? new Date(b.course_start_time).toLocaleString()
+  : '-'}
                   </td>
 
                   <td>

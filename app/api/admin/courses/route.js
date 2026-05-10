@@ -1,4 +1,5 @@
 import pool from '@/lib/db';
+import { isSafeText, validateCourseInput } from '@/lib/validation';
 
 async function verifyAdmin(request) {
     const cookieHeader = request.headers.get('cookie') || '';
@@ -39,6 +40,22 @@ export async function GET(request) {
         const category = searchParams.get('category');
         const status = searchParams.get('status');
         const date = searchParams.get('date');
+
+        if (search && !isSafeText(search, 100)) {
+            return Response.json({ error: 'Invalid search value.' }, { status: 400 });
+        }
+
+        if (category && !isSafeText(category, 50)) {
+            return Response.json({ error: 'Invalid category value.' }, { status: 400 });
+        }
+
+        if (status && !['draft', 'published', 'cancelled'].includes(status)) {
+            return Response.json({ error: 'Invalid course status.' }, { status: 400 });
+        }
+
+        if (date && !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+            return Response.json({ error: 'date must use YYYY-MM-DD format.' }, { status: 400 });
+        }
 
         let sql = `
             SELECT
@@ -107,36 +124,28 @@ export async function POST(request) {
             return Response.json({ error: 'Forbidden.' }, { status: 403 });
         }
 
-        const { title, description, category, instructor, start_time, end_time, location, capacity, status } = await request.json();
+        const courseInput = await request.json();
+        const validation = validateCourseInput(courseInput);
 
-        // Validate required fields
-        if (!title || !instructor || !start_time || !end_time || !capacity) {
-            return Response.json({ error: 'title, instructor, start_time, end_time and capacity are required.' }, { status: 400 });
+        if (validation.error) {
+            return Response.json({ error: validation.error }, { status: 400 });
         }
 
-        // end_time must be later than start_time
-        if (new Date(end_time) <= new Date(start_time)) {
-            return Response.json({ error: 'end_time must be later than start_time.' }, { status: 400 });
-        }
-
-        // capacity must be a positive integer
-        if (parseInt(capacity) <= 0) {
-            return Response.json({ error: 'capacity must be greater than 0.' }, { status: 400 });
-        }
+        const course = validation.value;
 
         const [result] = await pool.execute(
             `INSERT INTO courses (title, description, category, instructor, start_time, end_time, location, capacity, enrolled_count, status)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?)`,
             [
-                title,
-                description || null,
-                category || null,
-                instructor,
-                start_time,
-                end_time,
-                location || null,
-                parseInt(capacity),
-                status || 'draft',
+                course.title,
+                course.description,
+                course.category,
+                course.instructor,
+                course.start_time,
+                course.end_time,
+                course.location,
+                course.capacity,
+                course.status,
             ]
         );
 

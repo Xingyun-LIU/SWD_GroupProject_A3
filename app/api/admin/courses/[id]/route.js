@@ -1,4 +1,5 @@
 import pool from '@/lib/db';
+import { isPositiveInteger, validateCourseInput } from '@/lib/validation';
 
 // Helper function to verify admin session
 async function verifyAdmin(request) {
@@ -28,6 +29,10 @@ export async function GET(request, { params }) {
         }
 
         const { id } = await params;
+
+        if (!isPositiveInteger(id)) {
+            return Response.json({ error: 'Invalid course id.' }, { status: 400 });
+        }
 
         const [rows] = await pool.execute(
             `SELECT
@@ -62,6 +67,10 @@ export async function PUT(request, { params }) {
 
         const { id } = await params;
 
+        if (!isPositiveInteger(id)) {
+            return Response.json({ error: 'Invalid course id.' }, { status: 400 });
+        }
+
         // Check is the course exist
         const [existing] = await pool.execute(
             'SELECT id, enrolled_count FROM courses WHERE id = ?',
@@ -74,20 +83,17 @@ export async function PUT(request, { params }) {
 
         const enrolledCount = existing[0].enrolled_count;
 
-        const { title, description, category, instructor, start_time, end_time, location, capacity, status } = await request.json();
+        const courseInput = await request.json();
+        const validation = validateCourseInput(courseInput);
 
-        //check required fields
-        if (!title || !instructor || !start_time || !end_time || !capacity) {
-            return Response.json({ error: 'title, instructor, start_time, end_time and capacity are required.' }, { status: 400 });
+        if (validation.error) {
+            return Response.json({ error: validation.error }, { status: 400 });
         }
 
-        // end_time must be later than start_time
-        if (new Date(end_time) <= new Date(start_time)) {
-            return Response.json({ error: 'end_time must be later than start_time.' }, { status: 400 });
-        }
+        const course = validation.value;
 
         // capacity cannot be less than enrolled_count
-        if (parseInt(capacity) < enrolledCount) {
+        if (course.capacity < enrolledCount) {
             return Response.json({
                 error: `capacity cannot be less than current enrolled count (${enrolledCount}).`
             }, { status: 400 });
@@ -99,15 +105,15 @@ export async function PUT(request, { params }) {
                  start_time = ?, end_time = ?, location = ?, capacity = ?, status = ?
              WHERE id = ?`,
             [
-                title,
-                description || null,
-                category || null,
-                instructor,
-                start_time,
-                end_time,
-                location || null,
-                parseInt(capacity),
-                status || 'draft',
+                course.title,
+                course.description,
+                course.category,
+                course.instructor,
+                course.start_time,
+                course.end_time,
+                course.location,
+                course.capacity,
+                course.status,
                 id,
             ]
         );
@@ -129,6 +135,10 @@ export async function DELETE(request, { params }) {
         }
 
         const { id } = await params;
+
+        if (!isPositiveInteger(id)) {
+            return Response.json({ error: 'Invalid course id.' }, { status: 400 });
+        }
 
         // Check if course exists
         const [existing] = await pool.execute(

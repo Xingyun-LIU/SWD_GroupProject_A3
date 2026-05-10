@@ -1,4 +1,5 @@
 import pool from '@/lib/db';
+import { isPositiveInteger } from '@/lib/validation';
 
 // Student reserve courses
 export async function POST(request) {
@@ -35,6 +36,10 @@ export async function POST(request) {
 
         if (!courseId) {
             return Response.json({ error: 'courseId is required.' }, { status: 400 });
+        }
+
+        if (!isPositiveInteger(courseId)) {
+            return Response.json({ error: 'Invalid courseId.' }, { status: 400 });
         }
 
         //Find the course by courseId

@@ -1,11 +1,16 @@
 // Delete bookings.
 
 import pool from '@/lib/db';
+import { isPositiveInteger } from '@/lib/validation';
 
 // PUT /api/bookings/[id]/cancel
 export async function PUT(request, { params }) {
     try {
         const { id } = await params;
+
+        if (!isPositiveInteger(id)) {
+            return Response.json({ error: 'Invalid booking id.' }, { status: 400 });
+        }
 
         //read the session_token from the cookie
         const cookieHeader = request.headers.get('cookie') || '';

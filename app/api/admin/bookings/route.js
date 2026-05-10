@@ -1,4 +1,5 @@
 import pool from '@/lib/db';
+import { isPositiveInteger } from '@/lib/validation';
 
 async function verifyAdmin(request) {
     const cookieHeader = request.headers.get('cookie') || '';
@@ -38,7 +39,25 @@ export async function GET(request) {
         const courseId = searchParams.get('courseId');
         const studentId = searchParams.get('studentId');
         const status = searchParams.get('status');
-        const limit = parseInt(searchParams.get('limit') || '100');
+        const limitParam = searchParams.get('limit') || '100';
+
+        if (courseId && !isPositiveInteger(courseId)) {
+            return Response.json({ error: 'Invalid courseId.' }, { status: 400 });
+        }
+
+        if (studentId && !isPositiveInteger(studentId)) {
+            return Response.json({ error: 'Invalid studentId.' }, { status: 400 });
+        }
+
+        if (status && !['confirmed', 'cancelled'].includes(status)) {
+            return Response.json({ error: 'Invalid booking status.' }, { status: 400 });
+        }
+
+        if (!isPositiveInteger(limitParam)) {
+            return Response.json({ error: 'Invalid limit.' }, { status: 400 });
+        }
+
+        const limit = Math.min(parseInt(limitParam, 10), 100);
 
         let sql = `
             SELECT
@@ -71,9 +90,10 @@ export async function GET(request) {
             params.push(status);
         }
 
-       sql += ` ORDER BY b.booked_at DESC LIMIT ${limit}`;
+        sql += ` ORDER BY b.booked_at DESC LIMIT ?`;
+        params.push(limit);
 
-        const [bookings] = await pool.query(sql, params);
+        const [bookings] = await pool.execute(sql, params);
         return Response.json({ bookings }, { status: 200 });
 
     } catch (error) {

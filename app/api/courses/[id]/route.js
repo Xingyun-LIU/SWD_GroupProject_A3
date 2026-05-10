@@ -1,4 +1,5 @@
 import pool from '@/lib/db';
+import { isPositiveInteger } from '@/lib/validation';
 
 // Return the details of the published course
 // folder [id] will as the parameter of the {params}
@@ -6,6 +7,13 @@ export async function GET(request, { params }) {
     try {
 
         const { id } = await params;
+
+        if (!isPositiveInteger(id)) {
+            return Response.json(
+                { error: 'Invalid course id.' },
+                { status: 400 }
+            );
+        }
 
         const [courses] = await pool.execute(
             `
@@ -49,50 +57,4 @@ export async function GET(request, { params }) {
             { status: 500 }
         );
     }
-}
-/*delete */
-export async function DELETE(
-  req,
-  { params }
-) {
-  try {
-    await verifyAdmin(req)
-
-    const bookingCount = await prisma.booking.count({
-      where: {
-        courseId: params.id,
-        status: "booked",
-      },
-    })
-
-    if (bookingCount > 0) {
-      const cancelled = await prisma.course.update({
-        where: {
-          id: params.id,
-        },
-
-        data: {
-          status: "cancelled",
-        },
-      })
-
-      return success({
-        message:
-          "Course has bookings, status changed to cancelled",
-        cancelled,
-      })
-    }
-
-    await prisma.course.delete({
-      where: {
-        id: params.id,
-      },
-    })
-
-    return success({
-      message: "Course deleted successfully",
-    })
-  } catch (err) { 
-    return error(err.message, 401)
-  }
 }

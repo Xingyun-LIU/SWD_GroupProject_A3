@@ -27,13 +27,3 @@ export async function GET() {
     }
 }
 
-export async function DELETE(request) {
-    try {
-        const { id } = await request.json();
-        await pool.execute('DELETE FROM courses WHERE id = ?', [id]);
-        return Response.json({ success: true });
-    } catch (error) {
-        console.error('Delete course error:', error);
-        return Response.json({ error: 'Internal server error.' }, { status: 500 });
-    }
-}

@@ -1,4 +1,5 @@
 import pool from '@/lib/db';
+import { isPositiveInteger } from '@/lib/validation';
 
 // PUT /api/admin/users/[id]/status
 export async function PUT(request, { params }) {
@@ -24,6 +25,10 @@ export async function PUT(request, { params }) {
         }
 
         const { id } = await params;
+        if (!isPositiveInteger(id)) {
+            return Response.json({ error: 'Invalid user id.' }, { status: 400 });
+        }
+
         const { status } = await request.json();
 
         //check status value

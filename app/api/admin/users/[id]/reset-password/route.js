@@ -1,5 +1,6 @@
 import bcrypt from 'bcryptjs';
 import pool from '@/lib/db';
+import { isPositiveInteger, isValidPassword } from '@/lib/validation';
 
 // POST /api/admin/users/[id]/reset-password
 export async function POST(request, { params }) {
@@ -25,11 +26,15 @@ export async function POST(request, { params }) {
         }
 
         const { id } = await params;
+        if (!isPositiveInteger(id)) {
+            return Response.json({ error: 'Invalid user id.' }, { status: 400 });
+        }
+
         const { newPassword } = await request.json();
 
         // check new password
-        if (!newPassword || newPassword.length < 6) {
-            return Response.json({ error: 'newPassword must be at least 6 characters.' }, { status: 400 });
+        if (!isValidPassword(newPassword)) {
+            return Response.json({ error: 'newPassword must be 6-100 characters and include both letters and numbers.' }, { status: 400 });
         }
 
         // check target user exists

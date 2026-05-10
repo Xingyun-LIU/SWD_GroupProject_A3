@@ -2,6 +2,7 @@
 
 import pool from '@/lib/db';
 import bcrypt from 'bcryptjs';
+import { isValidPassword } from '@/lib/validation';
 
 // PUT /api/student/profile/password
 export async function PUT(request) {
@@ -38,6 +39,14 @@ export async function PUT(request) {
 
         if (!currentPassword || !newPassword) {
             return Response.json({ error: 'Both current and new password are required.' }, { status: 400 });
+        }
+
+        if (typeof currentPassword !== 'string' || currentPassword.length > 100) {
+            return Response.json({ error: 'Current password format is invalid.' }, { status: 400 });
+        }
+
+        if (!isValidPassword(newPassword)) {
+            return Response.json({ error: 'New password must be 6-100 characters and include both letters and numbers.' }, { status: 400 });
         }
 
         //Verify current password

@@ -1,4 +1,5 @@
 import pool from '@/lib/db';
+import { isSafeText } from '@/lib/validation';
 
 async function verifyAdmin(request) {
     const cookieHeader = request.headers.get('cookie') || '';
@@ -38,6 +39,18 @@ export async function GET(request) {
         const search = searchParams.get('search');
         const status = searchParams.get('status');
         const role = searchParams.get('role');
+
+        if (search && !isSafeText(search, 100)) {
+            return Response.json({ error: 'Invalid search value.' }, { status: 400 });
+        }
+
+        if (status && !['active', 'disabled'].includes(status)) {
+            return Response.json({ error: 'Invalid user status.' }, { status: 400 });
+        }
+
+        if (role && !['student', 'admin'].includes(role)) {
+            return Response.json({ error: 'Invalid user role.' }, { status: 400 });
+        }
 
         let sql = `
             SELECT id, username, email, role, status, created_at

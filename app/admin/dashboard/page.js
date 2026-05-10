@@ -24,16 +24,14 @@ export default function AdminDashboard() {
         ]);
 
         if (statsRes.ok) {
-          const statsData = await statsRes.json();
-          setStats(statsData.stats || statsData);
+          const data = await statsRes.json();
+          setStats(data.stats || data);
         }
 
         if (bookingsRes.ok) {
-          const bookingsData = await bookingsRes.json();
-          setRecentBookings(bookingsData.bookings || []);
+          const data = await bookingsRes.json();
+          setRecentBookings(data.bookings || []);
         }
-      } catch (error) {
-        console.error('Load admin dashboard error:', error);
       } finally {
         setLoading(false);
       }
@@ -43,82 +41,133 @@ export default function AdminDashboard() {
   }, []);
 
   if (loading) {
-    return <p>Loading dashboard...</p>;
+    return (
+      <div className="loading-spinner">
+        <div className="spinner" />
+      </div>
+    );
   }
 
   return (
-    <div>
-      <h1>Admin Dashboard</h1>
+    <div className="page-content">
 
-      <section>
-        <h2>Overview</h2>
+      {/* HEADER */}
+      <div className="panel-header" style={{ marginBottom: 20 }}>
+        <div className="panel-title">
+          <span className="panel-title-dot" />
+          Admin Dashboard
+        </div>
+      </div>
 
-        <div>
-          <div>
-            <strong>{stats.totalCourses}</strong>
-            <p>Total Courses</p>
-          </div>
+      {/* STATS */}
+      <div className="stats-grid">
 
-          <div>
-            <strong>{stats.publishedCourses}</strong>
-            <p>Published Courses</p>
-          </div>
+        <div className="stat-card stat-gold">
+          <div className="stat-icon">📚</div>
+          <div className="stat-value">{stats.totalCourses}</div>
+          <div className="stat-label">Total Courses</div>
+        </div>
 
-          <div>
-            <strong>{stats.totalBookings}</strong>
-            <p>Total Bookings</p>
-          </div>
+        <div className="stat-card stat-sapphire">
+          <div className="stat-icon">🚀</div>
+          <div className="stat-value">{stats.publishedCourses}</div>
+          <div className="stat-label">Published Courses</div>
+        </div>
 
-          <div>
-            <strong>{stats.totalStudents}</strong>
-            <p>Total Students</p>
-          </div>
+        <div className="stat-card stat-emerald">
+          <div className="stat-icon">📦</div>
+          <div className="stat-value">{stats.totalBookings}</div>
+          <div className="stat-label">Total Bookings</div>
+        </div>
 
-          <div>
-            <strong>{stats.upcomingCourses}</strong>
-            <p>Upcoming Courses</p>
+        <div className="stat-card stat-ruby">
+          <div className="stat-icon">👥</div>
+          <div className="stat-value">{stats.totalStudents}</div>
+          <div className="stat-label">Students</div>
+        </div>
+
+        <div className="stat-card stat-gold">
+          <div className="stat-icon">⏳</div>
+          <div className="stat-value">{stats.upcomingCourses}</div>
+          <div className="stat-label">Upcoming</div>
+        </div>
+
+      </div>
+
+      {/* ACTIONS PANEL */}
+      <div className="glass-panel" style={{ marginBottom: 24 }}>
+        <div className="panel-header">
+          <div className="panel-title">
+            <span className="panel-title-dot" />
+            Quick Actions
           </div>
         </div>
-      </section>
 
-      <section>
-        <h2>Quick Actions</h2>
+        <div className="toolbar">
+          <Link className="btn btn-primary" href="/admin/courses">
+            Manage Courses
+          </Link>
 
-        <div>
-          <Link href="/admin/courses">Manage Courses</Link>
-          <Link href="/admin/courses/new">Create New Course</Link>
-          <Link href="/admin/bookings">View Bookings</Link>
-          <Link href="/admin/users">Manage Users</Link>
+          <Link className="btn btn-ghost" href="/admin/courses/new">
+            Create Course
+          </Link>
+
+          <Link className="btn btn-ghost" href="/admin/bookings">
+            View Bookings
+          </Link>
+
+          <Link className="btn btn-ghost" href="/admin/users">
+            Manage Users
+          </Link>
         </div>
-      </section>
+      </div>
 
-      <section>
-        <h2>Recent Bookings</h2>
+      {/* TABLE */}
+      <div className="glass-panel">
+
+        <div className="panel-header">
+          <div className="panel-title">
+            <span className="panel-title-dot" />
+            Recent Bookings
+          </div>
+        </div>
 
         {recentBookings.length === 0 ? (
-          <p>No recent bookings.</p>
+          <div className="empty-state">
+            <div className="empty-icon">📭</div>
+            <div className="empty-title">No recent bookings</div>
+            <div className="empty-desc">
+              Bookings will appear here once users start enrolling.
+            </div>
+          </div>
         ) : (
-          <table>
+          <table className="data-table">
             <thead>
               <tr>
                 <th>ID</th>
                 <th>Student</th>
                 <th>Course</th>
                 <th>Status</th>
-                <th>Booked At</th>
+                <th>Booked</th>
               </tr>
             </thead>
 
             <tbody>
-              {recentBookings.map((booking) => (
-                <tr key={booking.id}>
-                  <td>{booking.id}</td>
-                  <td>{booking.student_username || booking.student_email}</td>
-                  <td>{booking.course_title}</td>
-                  <td>{booking.status}</td>
+              {recentBookings.map((b) => (
+                <tr key={b.id}>
+                  <td className="td-mono">{b.id}</td>
+                  <td className="td-primary">
+                    {b.student_username || b.student_email}
+                  </td>
+                  <td>{b.course_title}</td>
                   <td>
-                    {booking.booked_at
-                      ? new Date(booking.booked_at).toLocaleString()
+                    <span className={`badge badge-${b.status}`}>
+                      {b.status}
+                    </span>
+                  </td>
+                  <td className="td-mono">
+                    {b.booked_at
+                      ? new Date(b.booked_at).toLocaleString()
                       : ''}
                   </td>
                 </tr>
@@ -127,10 +176,13 @@ export default function AdminDashboard() {
           </table>
         )}
 
-        <p>
-          <Link href="/admin/bookings">View all bookings</Link>
-        </p>
-      </section>
+        <div className="toolbar">
+          <Link className="btn btn-ghost btn-sm" href="/admin/bookings">
+            View all bookings →
+          </Link>
+        </div>
+      </div>
+
     </div>
   );
 }

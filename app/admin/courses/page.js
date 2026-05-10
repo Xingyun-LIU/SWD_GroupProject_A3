@@ -1,6 +1,3 @@
-// Administrators can view all courses, including draft, published, and cancelled
-//  courses, and perform creation, editing, and deletion operations.
-
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -26,9 +23,6 @@ export default function AdminCoursesPage() {
 
         const data = await res.json();
         setCourses(data.courses || []);
-      } catch (error) {
-        console.error('Load admin courses error:', error);
-        setCourses([]);
       } finally {
         setLoading(false);
       }
@@ -38,119 +32,174 @@ export default function AdminCoursesPage() {
   }, []);
 
   async function deleteCourse(id) {
-    const confirmed = confirm('Are you sure you want to delete this course?');
-
-    if (!confirmed) return;
+    const ok = confirm('Delete this course?');
+    if (!ok) return;
 
     const res = await fetch(`/api/admin/courses/${id}`, {
       method: 'DELETE',
     });
 
     if (!res.ok) {
-      alert('Failed to delete course.');
+      alert('Failed to delete course');
       return;
     }
 
-    setCourses((currentCourses) =>
-      currentCourses.filter((course) => course.id !== id)
-    );
+    setCourses((prev) => prev.filter((c) => c.id !== id));
   }
 
-  // Filter courses by title, instructor or categories
-  const filteredCourses = courses.filter((course) => {
-    const keyword = search.toLowerCase();
+  const filteredCourses = courses.filter((c) => {
+    const k = search.toLowerCase();
 
-    const matchesSearch =
-      course.title?.toLowerCase().includes(keyword) ||
-      course.instructor?.toLowerCase().includes(keyword) ||
-      course.category?.toLowerCase().includes(keyword);
+    const matchSearch =
+      c.title?.toLowerCase().includes(k) ||
+      c.instructor?.toLowerCase().includes(k) ||
+      c.category?.toLowerCase().includes(k);
 
-    const matchesStatus = status ? course.status === status : true;
+    const matchStatus = status ? c.status === status : true;
 
-    return matchesSearch && matchesStatus;
+    return matchSearch && matchStatus;
   });
 
   return (
-    <div>
-      <h1>Course Management</h1>
+    <div className="page-content">
 
-      <div>
-        <input
-          type="text"
-          placeholder="Search by title, instructor, or category"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-
-        <select
-          value={status}
-          onChange={(e) => setStatus(e.target.value)}
-        >
-          <option value="">All Statuses</option>
-          <option value="draft">Draft</option>
-          <option value="published">Published</option>
-          <option value="cancelled">Cancelled</option>
-        </select>
-
-        <Link href="/admin/courses/new">
-          New Course
-        </Link>
+      {/* HEADER */}
+      <div className="panel-header">
+        <div className="panel-title">
+          <span className="panel-title-dot" />
+          Course Management
+        </div>
       </div>
 
-      {loading ? (
-        <p>Loading courses...</p>
-      ) : filteredCourses.length === 0 ? (
-        <p>No courses found.</p>
-      ) : (
-        <table>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Title</th>
-              <th>Category</th>
-              <th>Instructor</th>
-              <th>Start Time</th>
-              <th>Capacity</th>
-              <th>Enrolled</th>
-              <th>Remaining</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
+      {/* FILTER BAR */}
+      <div className="glass-panel" style={{ marginBottom: 16 }}>
+        <div className="toolbar">
 
-          <tbody>
-            {filteredCourses.map((course) => (
-              <tr key={course.id}>
-                <td>{course.id}</td>
-                <td>{course.title}</td>
-                <td>{course.category || '-'}</td>
-                <td>{course.instructor}</td>
-                <td>
-                  {course.start_time
-                    ? new Date(course.start_time).toLocaleString()
-                    : '-'}
-                </td>
-                <td>{course.capacity}</td>
-                <td>{course.enrolled_count}</td>
-                <td>{course.remaining_places}</td>
-                <td>{course.status}</td>
-                <td>
-                  <Link href={`/admin/courses/${course.id}/edit`}>
-                    Edit
-                  </Link>
+          {/* search */}
+          <div className="search-bar">
+            <span className="search-icon">🔎</span>
+            <input
+              type="text"
+              placeholder="Search title, instructor, category..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
 
-                  <button
-                    type="button"
-                    onClick={() => deleteCourse(course.id)}
-                  >
-                    Delete
-                  </button>
-                </td>
+          {/* status filter */}
+          <select
+            className="form-select"
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
+          >
+            <option value="">All Status</option>
+            <option value="draft">Draft</option>
+            <option value="published">Published</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+
+          {/* action */}
+          <Link className="btn btn-primary" href="/admin/courses/new">
+            + New Course
+          </Link>
+
+        </div>
+      </div>
+
+      {/* TABLE */}
+      <div className="glass-panel">
+
+        {loading ? (
+          <div className="loading-spinner">
+            <div className="spinner" />
+          </div>
+        ) : filteredCourses.length === 0 ? (
+          <div className="empty-state">
+            <div className="empty-icon">📚</div>
+            <div className="empty-title">No courses found</div>
+            <div className="empty-desc">
+              Try changing filters or create a new course
+            </div>
+          </div>
+        ) : (
+          <table className="data-table">
+
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Title</th>
+                <th>Category</th>
+                <th>Instructor</th>
+                <th>Start Time</th>
+                <th>Capacity</th>
+                <th>Enrolled</th>
+                <th>Remaining</th>
+                <th>Status</th>
+                <th style={{ textAlign: 'right' }}>Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+            </thead>
+
+            <tbody>
+              {filteredCourses.map((c) => (
+                <tr key={c.id}>
+
+                  <td className="td-mono">
+                    <span className="id-chip">{c.id}</span>
+                  </td>
+
+                  <td className="td-primary">
+                    {c.title}
+                  </td>
+
+                  <td>{c.category || '-'}</td>
+
+                  <td>{c.instructor}</td>
+
+                  <td className="td-mono">
+                    {c.start_time
+                      ? new Date(c.start_time).toLocaleString()
+                      : '-'}
+                  </td>
+
+                  <td>{c.capacity}</td>
+
+                  <td>{c.enrolled_count}</td>
+
+                  <td>{c.remaining_places}</td>
+
+                  <td>
+                    <span className={`badge badge-${c.status}`}>
+                      {c.status}
+                    </span>
+                  </td>
+
+                  <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+
+                    <Link
+                      className="btn btn-ghost btn-sm"
+                      href={`/admin/courses/${c.id}/edit`}
+                    >
+                      Edit
+                    </Link>
+
+                    <button
+                      className="btn btn-danger btn-sm"
+                      onClick={() => deleteCourse(c.id)}
+                      style={{ marginLeft: 8 }}
+                    >
+                      Delete
+                    </button>
+
+                  </td>
+
+                </tr>
+              ))}
+            </tbody>
+
+          </table>
+        )}
+
+      </div>
     </div>
   );
 }

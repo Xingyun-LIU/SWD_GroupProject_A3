@@ -50,7 +50,7 @@ export default function NewCoursePage() {
       }
 
       router.push('/admin/courses');
-    } catch (e) {
+    } catch {
       setError('Something went wrong.');
     } finally {
       setLoading(false);
@@ -58,14 +58,15 @@ export default function NewCoursePage() {
   }
 
   return (
-    <div className="page-content">
-
-      {/* HEADER */}
-      <div className="panel-header">
-        <div className="panel-title">
-          <span className="panel-title-dot" />
+    <div>
+      <div style={{ marginBottom: 24 }}>
+        <p className="home-kicker">Admin Area</p>
+        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '2.4rem', lineHeight: 1.1 }}>
           Create New Course
-        </div>
+        </h1>
+        <p style={{ color: 'var(--text-secondary)', marginTop: 8 }}>
+          Add a course session with schedule, capacity, location, and publication status.
+        </p>
       </div>
 
       {/* ERROR */}
@@ -80,8 +81,7 @@ export default function NewCoursePage() {
         </div>
       )}
 
-      {/* FORM CARD */}
-      <div className="glass-panel">
+      <div className="glass-panel" style={{ padding: 24 }}>
 
         <form onSubmit={handleSubmit} className="form-grid">
 

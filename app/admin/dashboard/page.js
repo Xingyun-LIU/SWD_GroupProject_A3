@@ -11,7 +11,6 @@ export default function AdminDashboard() {
     totalStudents: 0,
     upcomingCourses: 0,
   });
-
   const [recentBookings, setRecentBookings] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -49,52 +48,49 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="page-content">
-
-      {/* HEADER */}
-      <div className="panel-header" style={{ marginBottom: 20 }}>
-        <div className="panel-title">
-          <span className="panel-title-dot" />
+    <div>
+      <div style={{ marginBottom: 24 }}>
+        <p className="home-kicker">Admin Area</p>
+        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '2.4rem', lineHeight: 1.1 }}>
           Admin Dashboard
-        </div>
+        </h1>
+        <p style={{ color: 'var(--text-secondary)', marginTop: 8 }}>
+          Monitor courses, bookings, users, and upcoming teaching activity.
+        </p>
       </div>
 
-      {/* STATS */}
       <div className="stats-grid">
-
         <div className="stat-card stat-gold">
-          <div className="stat-icon">📚</div>
+          <div className="accent-bar" />
           <div className="stat-value">{stats.totalCourses}</div>
           <div className="stat-label">Total Courses</div>
         </div>
 
         <div className="stat-card stat-sapphire">
-          <div className="stat-icon">🚀</div>
+          <div className="accent-bar" />
           <div className="stat-value">{stats.publishedCourses}</div>
           <div className="stat-label">Published Courses</div>
         </div>
 
         <div className="stat-card stat-emerald">
-          <div className="stat-icon">📦</div>
+          <div className="accent-bar" />
           <div className="stat-value">{stats.totalBookings}</div>
           <div className="stat-label">Total Bookings</div>
         </div>
 
         <div className="stat-card stat-ruby">
-          <div className="stat-icon">👥</div>
+          <div className="accent-bar" />
           <div className="stat-value">{stats.totalStudents}</div>
           <div className="stat-label">Students</div>
         </div>
 
         <div className="stat-card stat-gold">
-          <div className="stat-icon">⏳</div>
+          <div className="accent-bar" />
           <div className="stat-value">{stats.upcomingCourses}</div>
-          <div className="stat-label">Upcoming</div>
+          <div className="stat-label">Upcoming Courses</div>
         </div>
-
       </div>
 
-      {/* ACTIONS PANEL */}
       <div className="glass-panel" style={{ marginBottom: 24 }}>
         <div className="panel-header">
           <div className="panel-title">
@@ -107,34 +103,31 @@ export default function AdminDashboard() {
           <Link className="btn btn-primary" href="/admin/courses">
             Manage Courses
           </Link>
-
           <Link className="btn btn-ghost" href="/admin/courses/new">
             Create Course
           </Link>
-
           <Link className="btn btn-ghost" href="/admin/bookings">
             View Bookings
           </Link>
-
           <Link className="btn btn-ghost" href="/admin/users">
             Manage Users
           </Link>
         </div>
       </div>
 
-      {/* TABLE */}
       <div className="glass-panel">
-
         <div className="panel-header">
           <div className="panel-title">
             <span className="panel-title-dot" />
             Recent Bookings
           </div>
+          <Link className="btn btn-ghost btn-sm" href="/admin/bookings">
+            View All
+          </Link>
         </div>
 
         {recentBookings.length === 0 ? (
           <div className="empty-state">
-            <div className="empty-icon">📭</div>
             <div className="empty-title">No recent bookings</div>
             <div className="empty-desc">
               Bookings will appear here once users start enrolling.
@@ -151,38 +144,30 @@ export default function AdminDashboard() {
                 <th>Booked</th>
               </tr>
             </thead>
-
             <tbody>
-              {recentBookings.map((b) => (
-                <tr key={b.id}>
-                  <td className="td-mono">{b.id}</td>
+              {recentBookings.map((booking) => (
+                <tr key={booking.id}>
+                  <td className="td-mono">{booking.id}</td>
                   <td className="td-primary">
-                    {b.student_username || b.student_email}
+                    {booking.student_username || booking.student_email}
                   </td>
-                  <td>{b.course_title}</td>
+                  <td>{booking.course_title}</td>
                   <td>
-                    <span className={`badge badge-${b.status}`}>
-                      {b.status}
+                    <span className={`badge badge-${booking.status}`}>
+                      {booking.status}
                     </span>
                   </td>
                   <td className="td-mono">
-                    {b.booked_at
-                      ? new Date(b.booked_at).toLocaleString()
-                      : ''}
+                    {booking.booked_at
+                      ? new Date(booking.booked_at).toLocaleString()
+                      : '-'}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         )}
-
-        <div className="toolbar">
-          <Link className="btn btn-ghost btn-sm" href="/admin/bookings">
-            View all bookings →
-          </Link>
-        </div>
       </div>
-
     </div>
   );
 }

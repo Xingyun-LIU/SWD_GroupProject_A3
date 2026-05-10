@@ -81,63 +81,131 @@ export default function StudentProfilePage() {
         }
     }
 
-    if (loading) return <p>Loading profile...</p>;
-    if (!user) return <p>Please log in first.</p>;
+    if (loading) {
+        return (
+            <div className="loading-spinner">
+                <div className="spinner" />
+            </div>
+        );
+    }
+
+    if (!user) {
+        return (
+            <div className="empty-state">
+                <div className="empty-title">Please log in first</div>
+                <div className="empty-desc">You need to be signed in to manage your profile.</div>
+                <button className="btn btn-primary" type="button" onClick={() => router.push('/auth/login')}>
+                    Login
+                </button>
+            </div>
+        );
+    }
 
     return (
         <div>
             <button
+                className="btn btn-ghost btn-sm"
                 type="button"
                 onClick={() => router.push('/student/dashboard')}
             >
                 Back
             </button>
 
-            <h1>Profile</h1>
+            <div style={{ margin: '18px 0 24px' }}>
+                <p className="home-kicker">Student Area</p>
+                <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '2.4rem', lineHeight: 1.1 }}>
+                    Profile
+                </h1>
+                <p style={{ color: 'var(--text-secondary)', marginTop: 8 }}>
+                    Review your account details and update your password.
+                </p>
+            </div>
 
-            <section>
-                <h2>Account Information</h2>
-                <p>Username: {user.username}</p>
-                <p>Role: {user.role}</p>
-            </section>
+            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(260px, 0.7fr) minmax(0, 1fr)', gap: 16 }}>
+                <section className="glass-panel" style={{ padding: 24 }}>
+                    <p className="home-kicker">Account</p>
+                    <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.3rem' }}>
+                        Account Information
+                    </h2>
 
-            <section>
-                <h2>Change Password</h2>
+                    <div className="divider" />
 
-                {message && <p>{message}</p>}
-
-                <form onSubmit={handlePasswordUpdate}>
-                    <div>
-                        <label>Current Password</label>
-                        <input
-                            type="password"
-                            value={currentPassword}
-                            onChange={(e) => setCurrentPassword(e.target.value)}
-                            required
-                        />
+                    <div style={{ display: 'grid', gap: 14 }}>
+                        <div>
+                            <p className="form-label">Username</p>
+                            <p>{user.username}</p>
+                        </div>
+                        <div>
+                            <p className="form-label">Role</p>
+                            <span className={`badge badge-${user.role}`}>
+                                {user.role}
+                            </span>
+                        </div>
                     </div>
 
-                    <div>
-                        <label>New Password</label>
-                        <input
-                            type="password"
-                            value={newPassword}
-                            onChange={(e) => setNewPassword(e.target.value)}
-                            required
-                        />
-                    </div>
+                    <div className="divider" />
 
-                    <button type="submit" disabled={saving}>
-                        {saving ? 'Saving...' : 'Update Password'}
+                    <button className="btn btn-danger" type="button" onClick={handleLogout}>
+                        Logout
                     </button>
-                </form>
-            </section>
+                </section>
 
-            <section>
-                <button type="button" onClick={handleLogout}>
-                    Logout
-                </button>
-            </section>
+                <section className="glass-panel" style={{ padding: 24 }}>
+                    <p className="home-kicker">Security</p>
+                    <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.3rem' }}>
+                        Change Password
+                    </h2>
+
+                    {message && (
+                        <p style={{ marginTop: 12, color: message.includes('successfully') ? 'var(--emerald)' : 'var(--ruby)' }}>
+                            {message}
+                        </p>
+                    )}
+
+                    <form onSubmit={handlePasswordUpdate} style={{ marginTop: 18 }}>
+                        <div className="form-grid">
+                            <div className="form-group">
+                                <label className="form-label">Current Password</label>
+                                <input
+                                    className="form-input"
+                                    type="password"
+                                    value={currentPassword}
+                                    onChange={(e) => setCurrentPassword(e.target.value)}
+                                    required
+                                />
+                            </div>
+
+                            <div className="form-group">
+                                <label className="form-label">New Password</label>
+                                <input
+                                    className="form-input"
+                                    type="password"
+                                    value={newPassword}
+                                    onChange={(e) => setNewPassword(e.target.value)}
+                                    required
+                                />
+                            </div>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
+                            <button className="btn btn-primary" type="submit" disabled={saving}>
+                                {saving ? 'Saving...' : 'Update Password'}
+                            </button>
+                            <button
+                                className="btn btn-ghost"
+                                type="button"
+                                onClick={() => {
+                                    setCurrentPassword('');
+                                    setNewPassword('');
+                                    setMessage('');
+                                }}
+                            >
+                                Clear
+                            </button>
+                        </div>
+                    </form>
+                </section>
+            </div>
         </div>
     );
 }

@@ -36,48 +36,59 @@ export default function Navbar() {
         router.push('/auth/login');
     };
 
+    const navClass = (href) => {
+        const active = pathname === href || pathname.startsWith(`${href}/`);
+        return active ? 'site-nav-link active' : 'site-nav-link';
+    };
+
     // Show loading bar when loading
     if (loading) {
         return (
-            <nav>
-                Loading...
+            <nav className="site-nav">
+                <div className="site-nav-inner">
+                    <Link href="/" className="site-logo">CourseBooking</Link>
+                    <span className="site-nav-status">Loading...</span>
+                </div>
             </nav>
         );
     }
 
     return (
-        <nav>
-            <Link href="/">Home</Link>
+        <nav className="site-nav">
+            <div className="site-nav-inner">
+            <Link href="/" className="site-logo">CourseBooking</Link>
 
+            <div className="site-nav-links">
             {!user && (
                 <>
-                    <Link href="/auth/login">Login</Link>
-                    <Link href="/auth/register">Register</Link>
+                    <Link className={navClass('/auth/login')} href="/auth/login">Login</Link>
+                    <Link className={navClass('/auth/register')} href="/auth/register">Register</Link>
                 </>
             )}
 
             {user && user.role === 'student' && (
                 <>
-                    <Link href="/courses">Courses</Link>
-                    <Link href="/student/dashboard">My Dashboard</Link>
-                    <Link href="/student/bookings">My Bookings</Link>
-                    <Link href="/student/profile">Profile</Link>
-                    <span>Hi, {user.username} (Student)</span>
-                    <button onClick={handleLogout}>Logout</button>
+                    <Link className={navClass('/courses')} href="/courses">Courses</Link>
+                    <Link className={navClass('/student/dashboard')} href="/student/dashboard">Dashboard</Link>
+                    <Link className={navClass('/student/bookings')} href="/student/bookings">Bookings</Link>
+                    <Link className={navClass('/student/profile')} href="/student/profile">Profile</Link>
+                    <span className="site-nav-user">Hi, {user.username} (Student)</span>
+                    <button className="btn btn-ghost btn-sm" type="button" onClick={handleLogout}>Logout</button>
                 </>
             )}
 
             {user && user.role === 'admin' && (
                 <>
-                    <Link href="/admin/dashboard">Dashboard</Link>
-                    <Link href="/admin/courses">Manage Courses</Link>
-                    <Link href="/admin/bookings">All Bookings</Link>
-                    <Link href="/admin/users">Users</Link>
-                    <Link href="/admin/backup">Backup</Link>
-                    <span>Hi, {user.username} (Admin)</span>
-                    <button onClick={handleLogout}>Logout</button>
+                    <Link className={navClass('/admin/dashboard')} href="/admin/dashboard">Dashboard</Link>
+                    <Link className={navClass('/admin/courses')} href="/admin/courses">Courses</Link>
+                    <Link className={navClass('/admin/bookings')} href="/admin/bookings">Bookings</Link>
+                    <Link className={navClass('/admin/users')} href="/admin/users">Users</Link>
+                    <span className="site-nav-user">Hi, {user.username} (Admin)</span>
+                    <button className="btn btn-ghost btn-sm" type="button" onClick={handleLogout}>Logout</button>
                 </>
             )}
+            </div>
+            </div>
         </nav>
     );
 }

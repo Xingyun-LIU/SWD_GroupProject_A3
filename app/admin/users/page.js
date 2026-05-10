@@ -29,8 +29,8 @@ export default function AdminUsersPage() {
 
         const data = await res.json();
         setUsers(data.users || []);
-      } catch (e) {
-        console.error(e);
+      } catch (error) {
+        console.error(error);
         setUsers([]);
       } finally {
         setLoading(false);
@@ -42,10 +42,7 @@ export default function AdminUsersPage() {
 
   async function toggleStatus(user) {
     const nextStatus = user.status === 'active' ? 'disabled' : 'active';
-
-    const confirmed = confirm(
-      `Set ${user.username} to ${nextStatus}?`
-    );
+    const confirmed = confirm(`Set ${user.username} to ${nextStatus}?`);
 
     if (!confirmed) return;
 
@@ -60,75 +57,73 @@ export default function AdminUsersPage() {
       return;
     }
 
-    setUsers((prev) =>
-      prev.map((u) =>
-        u.id === user.id ? { ...u, status: nextStatus } : u
+    setUsers((currentUsers) =>
+      currentUsers.map((currentUser) =>
+        currentUser.id === user.id
+          ? { ...currentUser, status: nextStatus }
+          : currentUser
       )
     );
   }
 
-  const filteredUsers = users.filter((u) => {
-    const k = search.toLowerCase();
+  const filteredUsers = users.filter((user) => {
+    const keyword = search.toLowerCase();
+
     return (
-      u.username?.toLowerCase().includes(k) ||
-      u.email?.toLowerCase().includes(k)
+      user.username?.toLowerCase().includes(keyword) ||
+      user.email?.toLowerCase().includes(keyword)
     );
   });
 
   return (
-    <div className="page-content">
-
-      {/* HEADER */}
-      <div className="panel-header">
-        <div className="panel-title">
-          <span className="panel-title-dot" />
+    <div>
+      <div style={{ marginBottom: 24 }}>
+        <p className="home-kicker">Admin Area</p>
+        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '2.4rem', lineHeight: 1.1 }}>
           User Management
-        </div>
+        </h1>
+        <p style={{ color: 'var(--text-secondary)', marginTop: 8 }}>
+          Search users and enable or disable student accounts.
+        </p>
       </div>
 
-      {/* FILTER BAR */}
       <div className="glass-panel" style={{ marginBottom: 16 }}>
         <div className="toolbar">
-
-          {/* search */}
-          <div className="search-bar">
-            <span className="search-icon">🔎</span>
+          <div className="search-bar" style={{ flex: 1 }}>
             <input
               type="text"
               placeholder="Search username or email..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(event) => setSearch(event.target.value)}
             />
           </div>
 
-          {/* filter */}
           <select
             className="form-select"
             value={status}
-            onChange={(e) => setStatus(e.target.value)}
+            onChange={(event) => setStatus(event.target.value)}
+            style={{ width: 170 }}
           >
             <option value="">All Status</option>
             <option value="active">Active</option>
             <option value="disabled">Disabled</option>
           </select>
 
+          <div className="toolbar-right">
+            <span className="page-info">Showing {filteredUsers.length} of {users.length}</span>
+          </div>
         </div>
       </div>
 
-      {/* CONTENT */}
       <div className="glass-panel">
-
         {loading ? (
           <div className="loading-spinner">
             <div className="spinner" />
           </div>
         ) : filteredUsers.length === 0 ? (
           <div className="empty-state">
-            <div className="empty-icon">👤</div>
             <div className="empty-title">No users found</div>
-            <div className="empty-desc">
-              Try adjusting your search or filters
-            </div>
+            <div className="empty-desc">Try adjusting your search or filters.</div>
           </div>
         ) : (
           <table className="data-table">
@@ -143,65 +138,47 @@ export default function AdminUsersPage() {
                 <th style={{ textAlign: 'right' }}>Actions</th>
               </tr>
             </thead>
-
             <tbody>
               {filteredUsers.map((user) => (
                 <tr key={user.id}>
                   <td className="td-mono">
                     <span className="id-chip">{user.id}</span>
                   </td>
-
-                  <td className="td-primary">
-                    {user.username}
-                  </td>
-
+                  <td className="td-primary">{user.username}</td>
                   <td>{user.email}</td>
-
                   <td>
                     <span className={`badge badge-${user.role}`}>
                       {user.role}
                     </span>
                   </td>
-
                   <td>
                     <span className={`badge badge-${user.status}`}>
                       {user.status}
                     </span>
                   </td>
-
                   <td className="td-mono">
                     {user.created_at
                       ? new Date(user.created_at).toLocaleString()
                       : '-'}
                   </td>
-
                   <td style={{ textAlign: 'right' }}>
                     {user.role === 'student' ? (
                       <button
-                        className={
-                          user.status === 'active'
-                            ? 'btn btn-danger btn-sm'
-                            : 'btn btn-primary btn-sm'
-                        }
+                        className={user.status === 'active' ? 'btn btn-danger btn-sm' : 'btn btn-primary btn-sm'}
+                        type="button"
                         onClick={() => toggleStatus(user)}
                       >
-                        {user.status === 'active'
-                          ? 'Disable'
-                          : 'Enable'}
+                        {user.status === 'active' ? 'Disable' : 'Enable'}
                       </button>
                     ) : (
-                      <span className="badge badge-admin">
-                        Admin account
-                      </span>
+                      <span className="badge badge-admin">Admin account</span>
                     )}
                   </td>
-
                 </tr>
               ))}
             </tbody>
           </table>
         )}
-
       </div>
     </div>
   );

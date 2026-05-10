@@ -29,8 +29,8 @@ export default function AdminBookingsPage() {
 
         const data = await res.json();
         setBookings(data.bookings || []);
-      } catch (e) {
-        console.error(e);
+      } catch (error) {
+        console.error(error);
         setBookings([]);
       } finally {
         setLoading(false);
@@ -40,74 +40,70 @@ export default function AdminBookingsPage() {
     loadBookings();
   }, [status]);
 
-  const filteredBookings = bookings.filter((b) => {
-    const k = search.toLowerCase();
+  const filteredBookings = bookings.filter((booking) => {
+    const keyword = search.toLowerCase();
 
     return (
-      b.student_username?.toLowerCase().includes(k) ||
-      b.student_email?.toLowerCase().includes(k) ||
-      b.course_title?.toLowerCase().includes(k)
+      booking.student_username?.toLowerCase().includes(keyword) ||
+      booking.student_email?.toLowerCase().includes(keyword) ||
+      booking.course_title?.toLowerCase().includes(keyword)
     );
   });
 
   return (
-    <div className="page-content">
-
-      {/* HEADER */}
-      <div className="panel-header">
-        <div className="panel-title">
-          <span className="panel-title-dot" />
+    <div>
+      <div style={{ marginBottom: 24 }}>
+        <p className="home-kicker">Admin Area</p>
+        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '2.4rem', lineHeight: 1.1 }}>
           Booking Management
-        </div>
+        </h1>
+        <p style={{ color: 'var(--text-secondary)', marginTop: 8 }}>
+          Review student bookings and filter by status.
+        </p>
       </div>
 
-      {/* FILTER BAR */}
       <div className="glass-panel" style={{ marginBottom: 16 }}>
         <div className="toolbar">
-
-          {/* search */}
-          <div className="search-bar">
-            <span className="search-icon">🔎</span>
+          <div className="search-bar" style={{ flex: 1 }}>
             <input
               type="text"
-              placeholder="Search student, email or course..."
+              placeholder="Search student, email, or course..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(event) => setSearch(event.target.value)}
             />
           </div>
 
-          {/* status filter */}
           <select
             className="form-select"
             value={status}
-            onChange={(e) => setStatus(e.target.value)}
+            onChange={(event) => setStatus(event.target.value)}
+            style={{ width: 180 }}
           >
             <option value="">All Statuses</option>
             <option value="confirmed">Confirmed</option>
             <option value="cancelled">Cancelled</option>
           </select>
 
+          <div className="toolbar-right">
+            <span className="page-info">
+              Showing {filteredBookings.length} of {bookings.length}
+            </span>
+          </div>
         </div>
       </div>
 
-      {/* TABLE */}
       <div className="glass-panel">
-
         {loading ? (
           <div className="loading-spinner">
             <div className="spinner" />
           </div>
         ) : filteredBookings.length === 0 ? (
           <div className="empty-state">
-            <div className="empty-icon">📅</div>
             <div className="empty-title">No bookings found</div>
-            <div className="empty-desc">
-              Try changing filters or search terms
-            </div>
+            <div className="empty-desc">Try changing filters or search terms.</div>
           </div>
         ) : (
           <table className="data-table">
-
             <thead>
               <tr>
                 <th>ID</th>
@@ -120,54 +116,40 @@ export default function AdminBookingsPage() {
                 <th>Cancelled</th>
               </tr>
             </thead>
-
             <tbody>
-              {filteredBookings.map((b) => (
-                <tr key={b.id}>
-
+              {filteredBookings.map((booking) => (
+                <tr key={booking.id}>
                   <td className="td-mono">
-                    <span className="id-chip">{b.id}</span>
+                    <span className="id-chip">{booking.id}</span>
                   </td>
-
-                  <td className="td-primary">
-                    {b.student_username || '-'}
-                  </td>
-
-                  <td>{b.student_email || '-'}</td>
-
-                  <td>{b.course_title || '-'}</td>
-
+                  <td className="td-primary">{booking.student_username || '-'}</td>
+                  <td>{booking.student_email || '-'}</td>
+                  <td>{booking.course_title || '-'}</td>
                   <td className="td-mono">
-                    {b.course_start_time
-  ? new Date(b.course_start_time).toLocaleString()
-  : '-'}
+                    {booking.course_start_time
+                      ? new Date(booking.course_start_time).toLocaleString()
+                      : '-'}
                   </td>
-
                   <td>
-                    <span className={`badge badge-${b.status}`}>
-                      {b.status}
+                    <span className={`badge badge-${booking.status}`}>
+                      {booking.status}
                     </span>
                   </td>
-
                   <td className="td-mono">
-                    {b.booked_at
-                      ? new Date(b.booked_at).toLocaleString()
+                    {booking.booked_at
+                      ? new Date(booking.booked_at).toLocaleString()
                       : '-'}
                   </td>
-
                   <td className="td-mono">
-                    {b.cancelled_at
-                      ? new Date(b.cancelled_at).toLocaleString()
+                    {booking.cancelled_at
+                      ? new Date(booking.cancelled_at).toLocaleString()
                       : '-'}
                   </td>
-
                 </tr>
               ))}
             </tbody>
-
           </table>
         )}
-
       </div>
     </div>
   );

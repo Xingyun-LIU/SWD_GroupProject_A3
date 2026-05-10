@@ -2,22 +2,20 @@ import pool from '@/lib/db';
 
 export async function GET(request) {
     try {
-        // Read session_token from cookie
         const cookieHeader = request.headers.get('cookie') || '';
-        const tokenMatch = cookieHeader.match(/session_token=([^;]+)/);
-        const token = tokenMatch ? tokenMatch[1] : null;
+        const sessionMatch = cookieHeader.match(/(?:^|;\s*)session_token=([^;]+)/);
+        const sessionToken = sessionMatch ? sessionMatch[1] : null;
 
-        if (!token) {
+        if (!sessionToken) {
             return Response.json({ error: 'Not authenticated.' }, { status: 401 });
         }
 
-        // Check sessions table，join users
         const [rows] = await pool.execute(
-            `SELECT users.id, users.username, users.role, users.status, sessions.expires_at
-       FROM sessions
-       JOIN users ON sessions.user_id = users.id
-       WHERE sessions.session_token = ?`,
-            [token]
+            `SELECT users.id, users.username, users.email, users.role, users.status, sessions.expires_at
+             FROM sessions
+             JOIN users ON sessions.user_id = users.id
+             WHERE sessions.session_token = ?`,
+            [sessionToken]
         );
 
         if (rows.length === 0) {
@@ -26,22 +24,20 @@ export async function GET(request) {
 
         const session = rows[0];
 
-        // Check if it has expired
         if (new Date(session.expires_at) < new Date()) {
             return Response.json({ error: 'Session expired.' }, { status: 401 });
         }
 
-        // Check if the user is disabled
         if (session.status === 'disabled') {
             return Response.json({ error: 'Account disabled.' }, { status: 403 });
         }
 
-        // Return user information
         return Response.json({
             id: session.id,
-            username: session.username,
+            username: session.username || session.email,
             role: session.role,
         });
+
     } catch (error) {
         console.error('Auth check error:', error);
         return Response.json({ error: 'Internal server error.' }, { status: 500 });

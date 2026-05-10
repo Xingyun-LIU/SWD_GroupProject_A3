@@ -119,55 +119,55 @@ export default function CoursesPage() {
                     </div>
                 ) : (
                     <div style={{ display: 'grid', gap: 12, padding: 24 }}>
-                    {filteredCourses.map((course) => (
-                        <div
-                            key={course.id}
-                            onClick={() => router.push(`/courses/${course.id}`)}
-                            style={{
-                                cursor: 'pointer',
-                                padding: 20,
-                            }}
-                            className="glass-panel"
-                        >
-                            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'flex-start' }}>
-                                <div>
-                                    <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.35rem' }}>
-                                        {course.title}
-                                    </h2>
-                                    <p style={{ color: 'var(--text-secondary)', marginTop: 6 }}>
-                                        {course.description}
-                                    </p>
-                                </div>
-                                <span className="badge badge-published">Published</span>
-                            </div>
-
+                        {filteredCourses.map((course) => (
                             <div
+                                key={course.id}
+                                onClick={() => router.push(`/courses/${course.id}`)}
                                 style={{
-                                    display: 'grid',
-                                    gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-                                    gap: 12,
-                                    marginTop: 18,
-                                    color: 'var(--text-secondary)',
-                                    fontSize: '0.88rem',
+                                    cursor: 'pointer',
+                                    padding: 20,
                                 }}
+                                className="glass-panel"
                             >
-                                <p>Category: {course.category || 'Uncategorized'}</p>
-                                <p>Instructor: {course.instructor}</p>
-                                <p>
-                                    Time:{' '}
-                                    {course.start_time
-                                        ? new Date(course.start_time).toLocaleString()
-                                        : '-'}
-                                </p>
-                                <p>Location: {course.location || '-'}</p>
-                                <p>Remaining places: {course.remaining_places}</p>
-                            </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'flex-start' }}>
+                                    <div>
+                                        <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.35rem' }}>
+                                            {course.title}
+                                        </h2>
+                                        <p style={{ color: 'var(--text-secondary)', marginTop: 6 }}>
+                                            {course.description}
+                                        </p>
+                                    </div>
+                                    <span className="badge badge-published">{course.status}</span>
+                                </div>
 
-                            <button className="btn btn-ghost btn-sm" type="button" style={{ marginTop: 16 }}>
-                                View Details
-                            </button>
-                        </div>
-                    ))}
+                                <div
+                                    style={{
+                                        display: 'grid',
+                                        gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                                        gap: 12,
+                                        marginTop: 18,
+                                        color: 'var(--text-secondary)',
+                                        fontSize: '0.88rem',
+                                    }}
+                                >
+                                    <p>Category: {course.category || 'Uncategorized'}</p>
+                                    <p>Instructor: {course.instructor}</p>
+                                    <p>
+                                        Time:{' '}
+                                        {course.start_time
+                                            ? new Date(course.start_time).toLocaleString()
+                                            : '-'}
+                                    </p>
+                                    <p>Location: {course.location || '-'}</p>
+                                    <p>Remaining places: {course.remaining_places}</p>
+                                </div>
+
+                                <button className="btn btn-ghost btn-sm" type="button" style={{ marginTop: 16 }}>
+                                    View Details
+                                </button>
+                            </div>
+                        ))}
                     </div>
                 )}
             </div>

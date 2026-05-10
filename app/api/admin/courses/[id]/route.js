@@ -62,7 +62,7 @@ export async function PUT(request, { params }) {
 
         const { id } = await params;
 
-        // 检查课程是否存在
+        // Check is the course exist
         const [existing] = await pool.execute(
             'SELECT id, enrolled_count FROM courses WHERE id = ?',
             [id]
@@ -140,17 +140,39 @@ export async function DELETE(request, { params }) {
             return Response.json({ error: 'Course not found.' }, { status: 404 });
         }
 
-        // If there are bookings, soft delete by setting status to 'cancelled'
+        // If there are bookings, cancel the course and its active bookings.
         if (existing[0].enrolled_count > 0) {
-            await pool.execute(
-                "UPDATE courses SET status = 'cancelled' WHERE id = ?",
-                [id]
-            );
-            return Response.json({
-                success: true,
-                soft_deleted: true,
-                message: 'Course has bookings and has been cancelled instead of deleted.',
-            });
+            const connection = await pool.getConnection();
+
+            try {
+                await connection.beginTransaction();
+
+                await connection.execute(
+                    "UPDATE courses SET status = 'cancelled', enrolled_count = 0 WHERE id = ?",
+                    [id]
+                );
+
+                await connection.execute(
+                    `UPDATE bookings
+                     SET status = 'cancelled', cancelled_at = NOW()
+                     WHERE course_id = ?
+                       AND status = 'confirmed'`,
+                    [id]
+                );
+
+                await connection.commit();
+
+                return Response.json({
+                    success: true,
+                    soft_deleted: true,
+                    message: 'Course and related active bookings have been cancelled.',
+                });
+            } catch (error) {
+                await connection.rollback();
+                throw error;
+            } finally {
+                connection.release();
+            }
         }
 
         // No bookings, safe to hard delete

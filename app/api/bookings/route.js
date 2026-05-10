@@ -76,6 +76,7 @@ export async function POST(request) {
              JOIN courses ON bookings.course_id = courses.id
              WHERE bookings.user_id = ?
                AND bookings.status = 'confirmed'
+               AND courses.status = 'published'
                AND courses.start_time < ?
                AND courses.end_time > ?`,
             [user.id, course.end_time, course.start_time]

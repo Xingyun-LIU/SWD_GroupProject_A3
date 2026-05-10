@@ -62,66 +62,115 @@ export default function CoursesPage() {
 
     return (
         <div>
-            <h1>Courses</h1>
-
-            <div>
-                <input
-                    type="text"
-                    placeholder="Search by name, description, or instructor"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                />
-
-                <select
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value)}
-                >
-                    <option value="">All Categories</option>
-                    {categories.map((cat) => (
-                        <option key={cat} value={cat}>
-                            {cat}
-                        </option>
-                    ))}
-                </select>
-
-                <input
-                    type="date"
-                    value={date}
-                    onChange={(e) => setDate(e.target.value)}
-                />
+            <div style={{ marginBottom: 24 }}>
+                <p className="home-kicker">Course Catalog</p>
+                <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '2.4rem', lineHeight: 1.1 }}>
+                    Browse Courses
+                </h1>
+                <p style={{ color: 'var(--text-secondary)', marginTop: 8 }}>
+                    Search published courses, filter by category or date, and open a course to book a place.
+                </p>
             </div>
 
-            {filteredCourses.length === 0 ? (
-                <p>No courses found.</p>
-            ) : (
-                <div>
+            <div className="glass-panel">
+                <div className="toolbar">
+                    <div className="search-bar">
+                        <input
+                            type="text"
+                            placeholder="Search by name, description, or instructor"
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                        />
+                    </div>
+
+                    <select
+                        className="form-select"
+                        style={{ width: 180 }}
+                        value={category}
+                        onChange={(e) => setCategory(e.target.value)}
+                    >
+                        <option value="">All Categories</option>
+                        {categories.map((cat) => (
+                            <option key={cat} value={cat}>
+                                {cat}
+                            </option>
+                        ))}
+                    </select>
+
+                    <input
+                        className="form-input"
+                        style={{ width: 180 }}
+                        type="date"
+                        value={date}
+                        onChange={(e) => setDate(e.target.value)}
+                    />
+
+                    <div className="toolbar-right">
+                        <span className="page-info">
+                            Showing {filteredCourses.length} of {courses.length}
+                        </span>
+                    </div>
+                </div>
+
+                {filteredCourses.length === 0 ? (
+                    <div className="empty-state">
+                        <div className="empty-title">No courses found</div>
+                        <div className="empty-desc">Try changing the search keyword, category, or date.</div>
+                    </div>
+                ) : (
+                    <div style={{ display: 'grid', gap: 12, padding: 24 }}>
                     {filteredCourses.map((course) => (
                         <div
                             key={course.id}
                             onClick={() => router.push(`/courses/${course.id}`)}
                             style={{
                                 cursor: 'pointer',
-                                border: '1px solid #ccc',
-                                margin: '8px',
-                                padding: '12px',
+                                padding: 20,
                             }}
+                            className="glass-panel"
                         >
-                            <h2>{course.title}</h2>
-                            <p>{course.description}</p>
-                            <p>Category: {course.category || 'Uncategorized'}</p>
-                            <p>Instructor: {course.instructor}</p>
-                            <p>
-                                Time:{' '}
-                                {course.start_time
-                                    ? new Date(course.start_time).toLocaleString()
-                                    : '-'}
-                            </p>
-                            <p>Location: {course.location || '-'}</p>
-                            <p>Remaining places: {course.remaining_places}</p>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'flex-start' }}>
+                                <div>
+                                    <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.35rem' }}>
+                                        {course.title}
+                                    </h2>
+                                    <p style={{ color: 'var(--text-secondary)', marginTop: 6 }}>
+                                        {course.description}
+                                    </p>
+                                </div>
+                                <span className="badge badge-published">Published</span>
+                            </div>
+
+                            <div
+                                style={{
+                                    display: 'grid',
+                                    gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                                    gap: 12,
+                                    marginTop: 18,
+                                    color: 'var(--text-secondary)',
+                                    fontSize: '0.88rem',
+                                }}
+                            >
+                                <p>Category: {course.category || 'Uncategorized'}</p>
+                                <p>Instructor: {course.instructor}</p>
+                                <p>
+                                    Time:{' '}
+                                    {course.start_time
+                                        ? new Date(course.start_time).toLocaleString()
+                                        : '-'}
+                                </p>
+                                <p>Location: {course.location || '-'}</p>
+                                <p>Remaining places: {course.remaining_places}</p>
+                            </div>
+
+                            <button className="btn btn-ghost btn-sm" type="button" style={{ marginTop: 16 }}>
+                                View Details
+                            </button>
                         </div>
                     ))}
-                </div>
-            )}
+                    </div>
+                )}
+            </div>
         </div>
     );
 }

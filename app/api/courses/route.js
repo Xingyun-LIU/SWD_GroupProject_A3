@@ -20,7 +20,7 @@ export async function GET() {
             FROM courses
             ORDER BY created_at DESC
         `);
-        return Response.json(courses, { status: 200 });
+        return Response.json({ courses }, { status: 200 });
     } catch (error) {
         console.error('Admin courses error:', error);
         return Response.json({ error: 'Internal server error.' }, { status: 500 });

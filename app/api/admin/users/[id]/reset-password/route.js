@@ -46,7 +46,7 @@ export async function POST(request, { params }) {
         const hashedPassword = await bcrypt.hash(newPassword, 10);
 
         await pool.execute(
-            'UPDATE users SET password = ? WHERE id = ?',
+            'UPDATE users SET password_hash = ? WHERE id = ?',
             [hashedPassword, id]
         );
 

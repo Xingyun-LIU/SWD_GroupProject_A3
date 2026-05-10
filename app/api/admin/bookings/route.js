@@ -1,8 +1,39 @@
 import pool from '@/lib/db';
 
+async function verifyAdmin(request) {
+    const cookieHeader = request.headers.get('cookie') || '';
+    const sessionMatch = cookieHeader.match(/(?:^|;\s*)session_token=([^;]+)/);
+    const sessionToken = sessionMatch ? sessionMatch[1] : null;
+
+    if (!sessionToken) return null;
+
+    const [rows] = await pool.execute(
+        `SELECT users.id, users.role
+         FROM sessions
+         JOIN users ON sessions.user_id = users.id
+         WHERE sessions.session_token = ?
+           AND sessions.expires_at > NOW()`,
+        [sessionToken]
+    );
+
+    if (rows.length === 0 || rows[0].role !== 'admin') return null;
+
+    return rows[0];
+}
+
 // GET /api/admin/bookings
 export async function GET(request) {
     try {
+
+        const admin = await verifyAdmin(request);
+
+        if (!admin) {
+            return Response.json(
+                { error: 'Unauthorized.' },
+                { status: 401 }
+            );
+        }
+
         const { searchParams } = new URL(request.url);
         const courseId = searchParams.get('courseId');
         const studentId = searchParams.get('studentId');

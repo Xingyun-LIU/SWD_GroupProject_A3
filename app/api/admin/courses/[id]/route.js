@@ -44,7 +44,7 @@ export async function GET(request, { params }) {
             return Response.json({ error: 'Course not found.' }, { status: 404 });
         }
 
-        return Response.json(rows[0], { status: 200 });
+        return Response.json({ course: rows[0] }, { status: 200 });
 
     } catch (error) {
         console.error('GET course error:', error);

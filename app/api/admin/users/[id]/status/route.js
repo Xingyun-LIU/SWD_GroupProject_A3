@@ -23,7 +23,6 @@ export async function PUT(request, { params }) {
             return Response.json({ error: 'Unauthorized.' }, { status: 401 });
         }
 
-        const adminId = sessionRows[0].id;
         const { id } = await params;
         const { status } = await request.json();
 

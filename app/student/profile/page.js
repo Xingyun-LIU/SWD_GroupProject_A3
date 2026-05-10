@@ -6,24 +6,26 @@ import { useRouter } from 'next/navigation';
 export default function StudentProfilePage() {
     const router = useRouter();
 
-    //Current logged-in user information
+    // Current logged-in user information
     const [user, setUser] = useState(null);
-    //Whether in edit mode
+    // Whether in edit mode
     const [editing, setEditing] = useState(false);
-    //Username being edited
+    // Username being edited
     const [username, setUsername] = useState('');
-    //Password being edited
-    const [password, setPassword] = useState('');
-    //Message for update result
+    // Current password (required to verify identity)
+    const [currentPassword, setCurrentPassword] = useState('');
+    // New password
+    const [newPassword, setNewPassword] = useState('');
+    // Message for update result
     const [message, setMessage] = useState('');
-    //Loading state
+    // Loading state
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         fetchUser();
     }, []);
 
-    //Fetch current logged-in user information
+    // Fetch current logged-in user information
     async function fetchUser() {
         try {
             const res = await fetch('/api/auth/this');
@@ -39,50 +41,54 @@ export default function StudentProfilePage() {
         }
     }
 
-    //Fetch updated user information
-    async function fetchUser() {
-        try {
-            const res = await fetch('/api/auth/this');
-            if (res.ok) {
-                const data = await res.json();
-                setUser(data);
-                setUsername(data.username);
-            }
-        } catch (err) {
-            console.error(err);
-        } finally {
-            setLoading(false);
-        }
-    }
-
-    //Submit update
+    // Submit update
     async function handleUpdate() {
         try {
-            const body = { username };
-            if (password) body.password = password;
+            setMessage('');
 
-            const res = await fetch('/api/auth/update', {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body),
-            });
-
-            const data = await res.json();
-
-            if (res.ok) {
-                setMessage('Profile updated successfully.');
-                setEditing(false);
-                setPassword('');
-                fetchUser();
-            } else {
-                setMessage(data.error || 'Failed to update profile');
+            // Update username if changed
+            if (username !== user.username) {
+                const res = await fetch('/api/student/profile/username', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username }),
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                    setMessage(data.error || 'Failed to update username');
+                    return;
+                }
             }
+
+            // Update password if provided
+            if (newPassword) {
+                if (!currentPassword) {
+                    setMessage('Please enter your current password to change password');
+                    return;
+                }
+                const res = await fetch('/api/student/profile/password', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ currentPassword, newPassword }),
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                    setMessage(data.error || 'Failed to update password');
+                    return;
+                }
+            }
+
+            setMessage('Profile updated successfully.');
+            setEditing(false);
+            setCurrentPassword('');
+            setNewPassword('');
+            fetchUser();
         } catch (err) {
             setMessage('Network error, please try again');
         }
     }
 
-    //Logout
+    // Logout
     async function handleLogout() {
         try {
             await fetch('/api/auth/logout', { method: 'POST' });
@@ -105,7 +111,7 @@ export default function StudentProfilePage() {
             {message && <p>{message}</p>}
 
             {!editing ? (
-                //View mode
+                // View mode
                 <div>
                     <p>Username: {user.username}</p>
                     <p>Role: {user.role === 'student' ? 'Student' : 'Administrator'}</p>
@@ -113,7 +119,7 @@ export default function StudentProfilePage() {
                     <button onClick={handleLogout}>Logout</button>
                 </div>
             ) : (
-                //Edit mode
+                // Edit mode
                 <div>
                     <div>
                         <label>Username</label>
@@ -124,11 +130,20 @@ export default function StudentProfilePage() {
                         />
                     </div>
                     <div>
+                        <label>Current Password (required to change password)</label>
+                        <input
+                            type="password"
+                            value={currentPassword}
+                            onChange={(e) => setCurrentPassword(e.target.value)}
+                            placeholder="Enter current password"
+                        />
+                    </div>
+                    <div>
                         <label>New Password (leave blank to keep current)</label>
                         <input
                             type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
                             placeholder="Leave blank to keep current password"
                         />
                     </div>
@@ -136,7 +151,8 @@ export default function StudentProfilePage() {
                     <button onClick={() => {
                         setEditing(false);
                         setMessage('');
-                        setPassword('');
+                        setCurrentPassword('');
+                        setNewPassword('');
                         setUsername(user.username);
                     }}>Cancel</button>
                 </div>

@@ -1,40 +1,26 @@
 'use client';
- 
+
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
- 
-export default function StudentDashboard() {
+
+export default function StudentBookingsPage() {
     const router = useRouter();
- 
-    //Current logged-in user
-    const [user, setUser] = useState(null);
-    //Recent booking list
+
+    //Appointment list
     const [bookings, setBookings] = useState([]);
     //Loading state
     const [loading, setLoading] = useState(true);
- 
+    //Filter state: all / confirmed / cancelled
+    const [filter, setFilter] = useState('all');
+
     useEffect(() => {
-        fetchUser();
         fetchBookings();
     }, []);
- 
-    //Fetch current logged-in user information
-    async function fetchUser() {
-        try {
-            const res = await fetch('/api/auth/this');
-            if (res.ok) {
-                const data = await res.json();
-                setUser(data);
-            }
-        } catch (err) {
-            console.error(err);
-        }
-    }
- 
-    //Fetch recent booking list
+
+    //Fetch appointment list from the backend
     async function fetchBookings() {
         try {
-            const res = await fetch('/api/bookings');
+            const res = await fetch('/api/student/bookings');
             if (res.ok) {
                 const data = await res.json();
                 setBookings(data);
@@ -45,67 +31,78 @@ export default function StudentDashboard() {
             setLoading(false);
         }
     }
- 
-    //Cancel booking
+
+    //Cancel appointment
     async function cancelBooking(bookingId) {
-        if (!confirm('Are you absolutely sure you want to cancel this appointment?？')) return;
- 
+        if (!confirm('Are you absolutely sure you want to cancel this appointment?')) return;
+
         try {
-            const res = await fetch(`/api/bookings/${bookingId}`, {
-                method: 'DELETE',
+            const res = await fetch(`/api/student/bookings/${bookingId}`, {
+                method: 'PUT',
             });
- 
+
             if (res.ok) {
-                // Refresh the booking list after successful cancellation
                 fetchBookings();
             } else {
                 const data = await res.json();
-                alert(data.error || 'Failed to cancel booking');
+                alert(data.error || 'Failed to cancel appointment');
             }
         } catch (err) {
             alert('Network error, please try again');
         }
     }
- 
+
+    //Filter appointments based on status
+    const filteredBookings = bookings.filter((b) => {
+        if (filter === 'all') return true;
+        return b.status === filter;
+    });
+
     if (loading) return <div>Loading...</div>;
- 
+
     return (
         <div>
-            <h1>Student Dashboard</h1>
- 
-            {/* Welcome message */}
-            {user && <p>Welcome, {user.username}</p>}
- 
-            {/* Quick access buttons */}
-            <button onClick={() => router.push('/courses')}>Browse Courses</button>
-            <button onClick={() => router.push('/student/bookings')}>My Bookings</button>
-            <button onClick={() => router.push('/student/profile')}>Profile</button>
- 
-            {/* Recent bookings */}
-            <h2>Recent Bookings</h2>
-            {bookings.length === 0 ? (
-                <p>No bookings found, <span onClick={() => router.push('/courses')} style={{ cursor: 'pointer', color: 'blue' }}>browse courses</span></p>
+            <button onClick={() => router.push('/student/dashboard')}>← 返回</button>
+
+            <h1>My Appointments</h1>
+
+            {/* Filter buttons */}
+            <div>
+                <button onClick={() => setFilter('all')}>All</button>
+                <button onClick={() => setFilter('confirmed')}>Confirmed</button>
+                <button onClick={() => setFilter('cancelled')}>Cancelled</button>
+            </div>
+
+            {/* Appointment list */}
+            {filteredBookings.length === 0 ? (
+                <p>No appointments found.</p>
             ) : (
                 <table>
                     <thead>
                         <tr>
                             <th>Course Name</th>
                             <th>Instructor</th>
-                            <th>Status</th>
+                            <th>Category</th>
+                            <th>Booking Status</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {bookings.map((booking) => (
+                        {filteredBookings.map((booking) => (
                             <tr key={booking.id}>
-                                <td>{booking.course_title}</td>
+                                <td
+                                    onClick={() => router.push(`/courses/${booking.course_id}`)}
+                                    style={{ cursor: 'pointer', color: 'blue' }}
+                                >
+                                    {booking.course_title}
+                                </td>
                                 <td>{booking.instructor}</td>
+                                <td>{booking.category || 'Uncategorized'}</td>
                                 <td>{booking.status === 'confirmed' ? 'Confirmed' : 'Cancelled'}</td>
                                 <td>
-                                    {/* Only confirmed bookings can be cancelled */}
                                     {booking.status === 'confirmed' && (
                                         <button onClick={() => cancelBooking(booking.id)}>
-                                            Cancel Booking
+                                            Cancel Appointment
                                         </button>
                                     )}
                                 </td>
@@ -117,4 +114,3 @@ export default function StudentDashboard() {
         </div>
     );
 }
- 

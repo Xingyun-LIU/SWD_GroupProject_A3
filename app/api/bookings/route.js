@@ -64,14 +64,16 @@ export async function POST(request) {
             return Response.json({ error: 'Course is full.' }, { status: 400 });
         }
 
-        // Prevent duplicate active bookings for the same course.
+        // Reuse an old cancelled booking instead of creating a duplicate row.
         const [existingRows] = await pool.execute(
-            `SELECT id FROM bookings
-             WHERE user_id = ? AND course_id = ? AND status = 'confirmed'`,
+            `SELECT id, status FROM bookings
+             WHERE user_id = ? AND course_id = ?`,
             [user.id, courseId]
         );
 
-        if (existingRows.length > 0) {
+        const existingBooking = existingRows[0];
+
+        if (existingBooking?.status === 'confirmed') {
             return Response.json({ error: 'You have already booked this course.' }, { status: 400 });
         }
 
@@ -91,16 +93,40 @@ export async function POST(request) {
             return Response.json({ error: 'This course conflicts with another booking.' }, { status: 400 });
         }
 
-        // Save the booking and increase the course enrolment count.
-        await pool.execute(
-            `INSERT INTO bookings (user_id, course_id, status) VALUES (?, ?, 'confirmed')`,
-            [user.id, courseId]
-        );
+        const connection = await pool.getConnection();
 
-        await pool.execute(
-            `UPDATE courses SET enrolled_count = enrolled_count + 1 WHERE id = ?`,
-            [courseId]
-        );
+        try {
+            await connection.beginTransaction();
+
+            if (existingBooking?.status === 'cancelled') {
+                // Reactivate a previously cancelled booking for the same course.
+                await connection.execute(
+                    `UPDATE bookings
+                     SET status = 'confirmed', booked_at = NOW(), cancelled_at = NULL
+                     WHERE id = ?`,
+                    [existingBooking.id]
+                );
+            } else {
+                // Create a new booking when no previous record exists.
+                await connection.execute(
+                    `INSERT INTO bookings (user_id, course_id, status) VALUES (?, ?, 'confirmed')`,
+                    [user.id, courseId]
+                );
+            }
+
+            // Keep the course enrolment count in sync with the booking state.
+            await connection.execute(
+                `UPDATE courses SET enrolled_count = enrolled_count + 1 WHERE id = ?`,
+                [courseId]
+            );
+
+            await connection.commit();
+        } catch (error) {
+            await connection.rollback();
+            throw error;
+        } finally {
+            connection.release();
+        }
 
         return Response.json({ message: 'Booking created successfully.' }, { status: 201 });
     } catch (error) {

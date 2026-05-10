@@ -91,8 +91,7 @@ export async function GET(request) {
             params.push(status);
         }
 
-        sql += ` ORDER BY b.booked_at DESC LIMIT ?`;
-        params.push(limit);
+        sql += ` ORDER BY b.booked_at DESC LIMIT ${limit}`;
 
         const [bookings] = await pool.execute(sql, params);
         return Response.json({ bookings }, { status: 200 });

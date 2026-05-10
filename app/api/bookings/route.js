@@ -1,6 +1,6 @@
 import pool from '@/lib/db';
 
-// POST /api/bookings
+// Student reserve courses
 export async function POST(request) {
     try {
         //Read the session_token from the cookie

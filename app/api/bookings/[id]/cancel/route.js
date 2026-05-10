@@ -1,3 +1,5 @@
+// Delete bookings.
+
 import pool from '@/lib/db';
 
 // PUT /api/bookings/[id]/cancel

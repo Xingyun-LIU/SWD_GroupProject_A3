@@ -7,18 +7,18 @@ export default function AdminCoursesPage() {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   
-  // 状态管理：对应 API 的可选参数
+  //state for filters
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('');
   const [status, setStatus] = useState('');
   const [date, setDate] = useState('');
 
-  // 1. 修改获取数据的逻辑，支持 API 参数
+  //loadCourses
   const loadCourses = useCallback(async () => {
     try {
       setLoading(true);
       
-      // 构建查询参数
+      //build query params based on filters
       const params = new URLSearchParams();
       if (search) params.append('search', search);
       if (category) params.append('category', category);
@@ -33,17 +33,17 @@ export default function AdminCoursesPage() {
       }
 
       const data = await res.json();
-      // 根据你的 API 结构，这里通常直接返回数组或带包装的对象
+      // if API returns { courses: [...] } or just [...]
       setCourses(data.courses || data || []);
     } catch (error) {
       console.error("Failed to fetch courses:", error);
     } finally {
       setLoading(false);
     }
-  }, [search, category, status, date]); // 当这些值改变时，重新触发请求
+  }, [search, category, status, date]); //will change when any filter changes
 
   useEffect(() => {
-    // 采用防抖思想或简单的延迟请求，避免输入搜索时频繁请求 API
+    // debounce loading to avoid too many requests when typing/changing filters
     const handler = setTimeout(() => {
       loadCourses();
     }, 300); 
@@ -64,7 +64,7 @@ export default function AdminCoursesPage() {
       return;
     }
 
-    // 重新加载列表
+    //refresh list after deletion
     loadCourses();
   }
 
@@ -77,7 +77,7 @@ export default function AdminCoursesPage() {
         </div>
       </div>
 
-      {/* 2. 增强的过滤栏 */}
+      {/* FILTERS */}
       <div className="glass-panel" style={{ marginBottom: 16 }}>
         <div className="toolbar" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
           
@@ -92,7 +92,7 @@ export default function AdminCoursesPage() {
             />
           </div>
 
-          {/* Category Filter - 新增 */}
+          {/* Category Filter  */}
           <input 
             type="text"
             className="form-select"
@@ -102,7 +102,7 @@ export default function AdminCoursesPage() {
             style={{ width: '150px' }}
           />
 
-          {/* Date Filter - 新增 */}
+          {/* Date Filter */}
           <input 
             type="date"
             className="form-select"

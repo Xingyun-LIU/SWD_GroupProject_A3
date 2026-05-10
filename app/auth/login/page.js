@@ -37,33 +37,51 @@ export default function LoginPage() {
     };
 
     return (
-        <div>
-            <h1>Login</h1>
-            <form onSubmit={handleSubmit}>
-                <div>
-                    <label>Username:</label>
-                    <input
-                        type="text"
-                        value={form.username}
-                        onChange={(e) => setForm({ ...form, username: e.target.value })}
-                        required
-                    />
-                </div>
-                <div>
-                    <label>Password:</label>
-                    <input
-                        type="password"
-                        value={form.password}
-                        onChange={(e) => setForm({ ...form, password: e.target.value })}
-                        required
-                    />
-                </div>
-                <button type="submit">Login</button>
-            </form>
-            {error && <p style={{ color: 'red' }}>{error}</p>}
-            <p>
-                Don&apos;t have an account? <a href="/auth/register">Register here</a>
-            </p>
+        <div className="min-h-screen flex items-center justify-center px-4">
+            <div className="glass w-full max-w-md p-10 rounded-3xl shadow-2xl">
+                <h1 className="text-4xl font-bold text-center mb-2">
+                    Login
+                </h1>
+                <p className="text-center text-gray-300 mb-8">
+                    Smart Course Selection Platform
+                </p>
+                <form onSubmit={handleSubmit}>
+                    <div className="space-y-5">
+                        <label className="block mb-1">Username:</label>
+                        <input
+                            type="text"
+                            className="w-full p-3 rounded bg-gray-800 border border-gray-700"
+                            value={form.username}
+                            onChange={(e) => setForm({ ...form, username: e.target.value })}
+                            required
+                        />
+                    </div>
+                    <div className="mt-4 mb-6">
+                        <label className="block mb-1">Password:</label>
+                        <input
+                            type="password"
+                            className="w-full p-3 rounded bg-gray-800 border border-gray-700"
+                            value={form.password}
+                            onChange={(e) => setForm({ ...form, password: e.target.value })}
+                            required
+                        />
+                    </div>
+                
+                    <button 
+                        type="submit"
+                        className="w-full p-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 transition-all font-semibold"
+                    >
+                        Login
+                    </button>
+                </form>
+                
+                {error && <p className="mt-4 text-center" style={{ color: 'red' }}>{error}</p>}
+                
+                <p className="mt-6 text-center text-sm text-gray-400">
+                    Don&apos;t have an account? <a href="/auth/register" className="text-indigo-400 hover:underline">Register here</a>
+                </p>
+            </div>
         </div>
     );
 }
+

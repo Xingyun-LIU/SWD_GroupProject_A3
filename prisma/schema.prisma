@@ -1,29 +1,82 @@
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
-
 generator client {
   provider = "prisma-client-js"
 }
 
+datasource db {
+  provider = "mysql"  // 从 postgresql 改成 mysql
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  admin
+  student
+}
+
+enum UserStatus {
+  active
+  disabled
+}
+
+enum CourseStatus {
+  draft
+  published
+  cancelled
+}
+
+enum BookingStatus {
+  booked
+  cancelled
+}
+
 model User {
-  id       Int    @id @default(autoincrement())
-  email    String @unique
-  password String
-  role     String @default("student")
-  status   String @default("active")
+  id           String       @id @default(cuid())
+  username     String       @unique
+  email        String       @unique
+  password     String
+  role         UserRole     @default(student)
+  status       UserStatus   @default(active)
+
+  bookings     Booking[]
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 model Course {
-  id        Int    @id @default(autoincrement())
-  title     String
-  capacity  Int
-  status    String
+  id             String         @id @default(cuid())
+
+  title          String
+  description    String
+  category       String
+  instructor     String
+
+  start_time     DateTime
+  end_time       DateTime
+
+  location       String
+  capacity       Int
+
+  status         CourseStatus @default(draft)
+
+  bookings        Booking[]
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
 
 model Booking {
-  id       Int @id @default(autoincrement())
-  userId   Int
-  courseId Int
+  id            String         @id @default(cuid())
+
+  userId        String
+  courseId      String
+
+  status        BookingStatus @default(booked)
+
+  booked_at     DateTime @default(now())
+  cancelled_at  DateTime?
+
+  user          User @relation(fields: [userId], references: [id])
+  course        Course @relation(fields: [courseId], references: [id])
+
+  @@unique([userId, courseId])
 }

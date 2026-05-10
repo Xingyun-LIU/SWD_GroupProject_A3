@@ -45,16 +45,30 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [recentBookings, setRecentBookings] = useState([]);
 
-  useEffect(() => {
-    Promise.all([
-      fetch('/api/admin/stats').then(r => r.json()),
-      fetch('/api/admin/bookings?limit=6').then(r => r.json()),
-    ]).then(([statsData, bookingsData]) => {
+
+useEffect(() => {
+  const fetchStats = async () => {
+    try {
+      const [statsRes, bookingsRes] = await Promise.all([
+        fetch('/api/admin/stats'),
+        fetch('/api/admin/bookings?limit=6')
+      ]);
+
+      const statsData = await statsRes.json();
+      const bookingsData = await bookingsRes.json();
+
       setStats(statsData);
-      setRecentBookings(bookingsData.bookings || []);
-    }).catch(console.error)
-      .finally(() => setLoading(false));
-  }, []);
+      setRecentBookings(bookingsData?.bookings || []);
+    } catch (error) {
+      console.error("Dashboard fetch error:", error);
+      setRecentBookings([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchStats();
+}, []);
 
   if (loading) return (
     <div className="loading-spinner"><div className="spinner" /></div>

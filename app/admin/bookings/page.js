@@ -1,5 +1,3 @@
-// Administrators can view all bookings and filter by status, course, and student
-
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -16,10 +14,7 @@ export default function AdminBookingsPage() {
         setLoading(true);
 
         const params = new URLSearchParams();
-
-        if (status) {
-          params.set('status', status);
-        }
+        if (status) params.set('status', status);
 
         const url = params.toString()
           ? `/api/admin/bookings?${params.toString()}`
@@ -34,8 +29,8 @@ export default function AdminBookingsPage() {
 
         const data = await res.json();
         setBookings(data.bookings || []);
-      } catch (error) {
-        console.error('Load admin bookings error:', error);
+      } catch (e) {
+        console.error(e);
         setBookings([]);
       } finally {
         setLoading(false);
@@ -45,85 +40,135 @@ export default function AdminBookingsPage() {
     loadBookings();
   }, [status]);
 
-  const filteredBookings = bookings.filter((booking) => {
-    const keyword = search.toLowerCase();
+  const filteredBookings = bookings.filter((b) => {
+    const k = search.toLowerCase();
 
     return (
-      booking.student_username?.toLowerCase().includes(keyword) ||
-      booking.student_email?.toLowerCase().includes(keyword) ||
-      booking.course_title?.toLowerCase().includes(keyword)
+      b.student_username?.toLowerCase().includes(k) ||
+      b.student_email?.toLowerCase().includes(k) ||
+      b.course_title?.toLowerCase().includes(k)
     );
   });
 
   return (
-    <div>
-      <h1>Booking Management</h1>
+    <div className="page-content">
 
-      <div>
-        <input
-          type="text"
-          placeholder="Search by student or course"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-
-        <select
-          value={status}
-          onChange={(e) => setStatus(e.target.value)}
-        >
-          <option value="">All Statuses</option>
-          <option value="confirmed">Confirmed</option>
-          <option value="cancelled">Cancelled</option>
-        </select>
+      {/* HEADER */}
+      <div className="panel-header">
+        <div className="panel-title">
+          <span className="panel-title-dot" />
+          Booking Management
+        </div>
       </div>
 
-      {loading ? (
-        <p>Loading bookings...</p>
-      ) : filteredBookings.length === 0 ? (
-        <p>No bookings found.</p>
-      ) : (
-        <table>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Student</th>
-              <th>Email</th>
-              <th>Course</th>
-              <th>Course Time</th>
-              <th>Status</th>
-              <th>Booked At</th>
-              <th>Cancelled At</th>
-            </tr>
-          </thead>
+      {/* FILTER BAR */}
+      <div className="glass-panel" style={{ marginBottom: 16 }}>
+        <div className="toolbar">
 
-          <tbody>
-            {filteredBookings.map((booking) => (
-              <tr key={booking.id}>
-                <td>{booking.id}</td>
-                <td>{booking.student_username}</td>
-                <td>{booking.student_email}</td>
-                <td>{booking.course_title}</td>
-                <td>
-                  {booking.start_time
-                    ? new Date(booking.start_time).toLocaleString()
-                    : '-'}
-                </td>
-                <td>{booking.status}</td>
-                <td>
-                  {booking.booked_at
-                    ? new Date(booking.booked_at).toLocaleString()
-                    : '-'}
-                </td>
-                <td>
-                  {booking.cancelled_at
-                    ? new Date(booking.cancelled_at).toLocaleString()
-                    : '-'}
-                </td>
+          {/* search */}
+          <div className="search-bar">
+            <span className="search-icon">🔎</span>
+            <input
+              type="text"
+              placeholder="Search student, email or course..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+
+          {/* status filter */}
+          <select
+            className="form-select"
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
+          >
+            <option value="">All Statuses</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+
+        </div>
+      </div>
+
+      {/* TABLE */}
+      <div className="glass-panel">
+
+        {loading ? (
+          <div className="loading-spinner">
+            <div className="spinner" />
+          </div>
+        ) : filteredBookings.length === 0 ? (
+          <div className="empty-state">
+            <div className="empty-icon">📅</div>
+            <div className="empty-title">No bookings found</div>
+            <div className="empty-desc">
+              Try changing filters or search terms
+            </div>
+          </div>
+        ) : (
+          <table className="data-table">
+
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Student</th>
+                <th>Email</th>
+                <th>Course</th>
+                <th>Course Time</th>
+                <th>Status</th>
+                <th>Booked</th>
+                <th>Cancelled</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+            </thead>
+
+            <tbody>
+              {filteredBookings.map((b) => (
+                <tr key={b.id}>
+
+                  <td className="td-mono">
+                    <span className="id-chip">{b.id}</span>
+                  </td>
+
+                  <td className="td-primary">
+                    {b.student_username || '-'}
+                  </td>
+
+                  <td>{b.student_email || '-'}</td>
+
+                  <td>{b.course_title || '-'}</td>
+
+                  <td className="td-mono">
+                    {b.start_time
+                      ? new Date(b.start_time).toLocaleString()
+                      : '-'}
+                  </td>
+
+                  <td>
+                    <span className={`badge badge-${b.status}`}>
+                      {b.status}
+                    </span>
+                  </td>
+
+                  <td className="td-mono">
+                    {b.booked_at
+                      ? new Date(b.booked_at).toLocaleString()
+                      : '-'}
+                  </td>
+
+                  <td className="td-mono">
+                    {b.cancelled_at
+                      ? new Date(b.cancelled_at).toLocaleString()
+                      : '-'}
+                  </td>
+
+                </tr>
+              ))}
+            </tbody>
+
+          </table>
+        )}
+
+      </div>
     </div>
   );
 }

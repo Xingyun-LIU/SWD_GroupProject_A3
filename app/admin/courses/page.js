@@ -1,145 +1,156 @@
+// Administrators can view all courses, including draft, published, and cancelled
+//  courses, and perform creation, editing, and deletion operations.
+
 'use client';
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 
-export default function CoursesPage() {
+export default function AdminCoursesPage() {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-
-  async function loadCourses() {
-    try {
-      setLoading(true);
-      const res = await fetch('/api/admin/courses');
-      if (!res.ok) throw new Error('Failed to fetch');
-      const data = await res.json();
-      setCourses(Array.isArray(data) ? data : []);
-    } catch (error) {
-      console.error('Load courses error:', error);
-      setCourses([]);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function deleteCourse(id) {
-    if (!confirm('Delete this course?')) return;
-    await fetch(`/api/admin/courses/${id}`, { method: 'DELETE' });
-    loadCourses();
-  }
+  const [status, setStatus] = useState('');
 
   useEffect(() => {
+    async function loadCourses() {
+      try {
+        setLoading(true);
+
+        const res = await fetch('/api/admin/courses');
+
+        if (!res.ok) {
+          setCourses([]);
+          return;
+        }
+
+        const data = await res.json();
+        setCourses(data.courses || []);
+      } catch (error) {
+        console.error('Load admin courses error:', error);
+        setCourses([]);
+      } finally {
+        setLoading(false);
+      }
+    }
+
     loadCourses();
-    // 每 30 秒自动刷新，保持 status 实时
-    const interval = setInterval(loadCourses, 30000);
-    return () => clearInterval(interval);
   }, []);
 
-  const filtered = courses.filter(c =>
-    c.title?.toLowerCase().includes(search.toLowerCase()) ||
-    c.instructor?.toLowerCase().includes(search.toLowerCase()) ||
-    c.category?.toLowerCase().includes(search.toLowerCase())
-  );
+  async function deleteCourse(id) {
+    const confirmed = confirm('Are you sure you want to delete this course?');
 
-  const statusColor = {
-    published: 'badge-published',
-    draft: 'badge-draft',
-    cancelled: 'badge-cancelled',
-  };
+    if (!confirmed) return;
+
+    const res = await fetch(`/api/admin/courses/${id}`, {
+      method: 'DELETE',
+    });
+
+    if (!res.ok) {
+      alert('Failed to delete course.');
+      return;
+    }
+
+    setCourses((currentCourses) =>
+      currentCourses.filter((course) => course.id !== id)
+    );
+  }
+
+  // Filter courses by title, instructor or categories
+  const filteredCourses = courses.filter((course) => {
+    const keyword = search.toLowerCase();
+
+    const matchesSearch =
+      course.title?.toLowerCase().includes(keyword) ||
+      course.instructor?.toLowerCase().includes(keyword) ||
+      course.category?.toLowerCase().includes(keyword);
+
+    const matchesStatus = status ? course.status === status : true;
+
+    return matchesSearch && matchesStatus;
+  });
 
   return (
     <div>
-      <div className="glass-panel">
-        {/* Toolbar */}
-        <div className="toolbar">
-          <div className="search-bar">
-            <svg className="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            <input
-              placeholder="Search courses..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-            />
-          </div>
-          <div className="toolbar-right">
-            <button className="btn btn-ghost btn-sm" onClick={loadCourses}>
-              ↻ Refresh
-            </button>
-            <Link href="/admin/courses-new" className="btn btn-primary btn-sm">
-              + New Course
-            </Link>
-          </div>
-        </div>
+      <h1>Course Management</h1>
 
-        {/* Table */}
-        {loading ? (
-          <div className="loading-spinner"><div className="spinner" /></div>
-        ) : filtered.length === 0 ? (
-          <div className="empty-state">
-            <div className="empty-icon">◉</div>
-            <div className="empty-title">No courses found</div>
-            <div className="empty-desc">Add a new course or adjust your search.</div>
-          </div>
-        ) : (
-          <>
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Title</th>
-                  <th>Category</th>
-                  <th>Instructor</th>
-                  <th>Capacity</th>
-                  <th>Enrolled</th>
-                  <th>Remaining</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map(c => (
-                  <tr key={c.id}>
-                    <td><span className="id-chip">#{c.id}</span></td>
-                    <td className="td-primary">{c.title}</td>
-                    <td>{c.category || '—'}</td>
-                    <td>{c.instructor}</td>
-                    <td className="td-mono">{c.capacity}</td>
-                    <td className="td-mono">{c.enrolled_count}</td>
-                    <td className="td-mono">
-                      <span style={{ color: c.remaining_places === 0 ? 'var(--ruby)' : 'var(--emerald)' }}>
-                        {c.remaining_places}
-                      </span>
-                    </td>
-                    <td>
-                      <span className={`badge ${statusColor[c.status] || 'badge-draft'}`}>
-                        {c.status}
-                      </span>
-                    </td>
-                    <td>
-                      <div style={{ display: 'flex', gap: 6 }}>
-                        <Link href={`/admin/course-id-edit?id=${c.id}`} className="btn btn-ghost btn-sm">
-                          Edit
-                        </Link>
-                        <button
-                          className="btn btn-danger btn-sm"
-                          onClick={() => deleteCourse(c.id)}
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <div className="page-info" style={{ padding: '12px 24px', borderTop: '1px solid var(--border)' }}>
-              Showing {filtered.length} of {courses.length} courses
-            </div>
-          </>
-        )}
+      <div>
+        <input
+          type="text"
+          placeholder="Search by title, instructor, or category"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+
+        <select
+          value={status}
+          onChange={(e) => setStatus(e.target.value)}
+        >
+          <option value="">All Statuses</option>
+          <option value="draft">Draft</option>
+          <option value="published">Published</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+
+        <Link href="/admin/courses/new">
+          New Course
+        </Link>
       </div>
+
+      {loading ? (
+        <p>Loading courses...</p>
+      ) : filteredCourses.length === 0 ? (
+        <p>No courses found.</p>
+      ) : (
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Title</th>
+              <th>Category</th>
+              <th>Instructor</th>
+              <th>Start Time</th>
+              <th>Capacity</th>
+              <th>Enrolled</th>
+              <th>Remaining</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {filteredCourses.map((course) => (
+              <tr key={course.id}>
+                <td>{course.id}</td>
+                <td>{course.title}</td>
+                <td>{course.category || '-'}</td>
+                <td>{course.instructor}</td>
+                <td>
+                  {course.start_time
+                    ? new Date(course.start_time).toLocaleString()
+                    : '-'}
+                </td>
+                <td>{course.capacity}</td>
+                <td>{course.enrolled_count}</td>
+                <td>{course.remaining_places}</td>
+                <td>{course.status}</td>
+                <td>
+                  <Link href={`/admin/courses/${course.id}/edit`}>
+                    Edit
+                  </Link>
+
+                  <button
+                    type="button"
+                    onClick={() => deleteCourse(course.id)}
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </div>
   );
 }

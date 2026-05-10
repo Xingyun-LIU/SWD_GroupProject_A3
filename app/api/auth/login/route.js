@@ -2,13 +2,39 @@ import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import pool from '@/lib/db';
 
+const loginIdentifierRegex = /^[a-zA-Z0-9_@.-]{3,100}$/;
+const unsafeHtmlRegex = /[<>]/;
+
 export async function POST(request) {
   try {
     const { username, password } = await request.json();
 
+    // Basic varification
     if (!username || !password) {
       return Response.json(
         { error: 'Username and password are required.' },
+        { status: 400 }
+      );
+    }
+
+    // Format check by regex
+    if (!loginIdentifierRegex.test(username)) {
+      return Response.json(
+        { error: 'Invalid username or email format.' },
+        { status: 400 }
+      );
+    }
+    // XSS attack
+    if (unsafeHtmlRegex.test(username)) {
+      return Response.json(
+        { error: 'HTML tags are not allowed.' },
+        { status: 400 }
+      );
+    }
+
+    if (password.length > 100) {
+      return Response.json(
+        { error: 'Password is too long.' },
         { status: 400 }
       );
     }

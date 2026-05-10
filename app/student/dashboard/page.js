@@ -36,37 +36,83 @@ export default function StudentDashboardPage() {
     }, []);
 
     if (loading) {
-        return <p>Loading dashboard...</p>;
+        return (
+            <div className="loading-spinner">
+                <div className="spinner" />
+            </div>
+        );
     }
 
     return (
         <div>
-            <h1>Student Dashboard</h1>
-
-            <section>
-                <h2>Welcome</h2>
-                <p>
-                    Hi, {user?.username || 'Student'}.
+            <div style={{ marginBottom: 24 }}>
+                <p className="home-kicker">Student Area</p>
+                <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '2.4rem', lineHeight: 1.1 }}>
+                    Student Dashboard
+                </h1>
+                <p style={{ color: 'var(--text-secondary)', marginTop: 8 }}>
+                    Welcome back, {user?.username || 'Student'}. Manage your courses and bookings from here.
                 </p>
-            </section>
+            </div>
 
-            <section>
-                <h2>Quick Actions</h2>
+            <section className="stats-grid">
+                <div className="stat-card stat-sapphire">
+                    <div className="accent-bar" />
+                    <div className="stat-value">{bookings.length}</div>
+                    <div className="stat-label">Upcoming Bookings</div>
+                </div>
 
-                <div>
-                    <Link href="/courses">Browse Courses</Link>
-                    <Link href="/student/bookings">My Bookings</Link>
-                    <Link href="/student/profile">Profile</Link>
+                <div className="stat-card stat-gold">
+                    <div className="accent-bar" />
+                    <div className="stat-value">{user?.role === 'student' ? 'Student' : '-'}</div>
+                    <div className="stat-label">Current Role</div>
+                </div>
+
+                <div className="stat-card stat-emerald">
+                    <div className="accent-bar" />
+                    <div className="stat-value">Active</div>
+                    <div className="stat-label">Account Status</div>
                 </div>
             </section>
 
-            <section>
-                <h2>Upcoming Bookings</h2>
+            <section className="home-grid">
+                <Link href="/courses" className="glass-panel home-card" style={{ textDecoration: 'none' }}>
+                    <h2>Browse Courses</h2>
+                    <p>Search available sessions and book a place.</p>
+                </Link>
+
+                <Link href="/student/bookings" className="glass-panel home-card" style={{ textDecoration: 'none' }}>
+                    <h2>My Bookings</h2>
+                    <p>View upcoming, past, and cancelled bookings.</p>
+                </Link>
+
+                <Link href="/student/profile" className="glass-panel home-card" style={{ textDecoration: 'none' }}>
+                    <h2>Profile</h2>
+                    <p>Update your password and manage account access.</p>
+                </Link>
+            </section>
+
+            <section className="glass-panel">
+                <div className="panel-header">
+                    <span className="panel-title">
+                        <span className="panel-title-dot" />
+                        Upcoming Bookings
+                    </span>
+                    <Link href="/student/bookings" className="btn btn-ghost btn-sm">
+                        View All
+                    </Link>
+                </div>
 
                 {bookings.length === 0 ? (
-                    <p>You have no upcoming bookings.</p>
+                    <div className="empty-state">
+                        <div className="empty-title">No upcoming bookings</div>
+                        <div className="empty-desc">Browse courses to reserve your next session.</div>
+                        <Link href="/courses" className="btn btn-primary">
+                            Browse Courses
+                        </Link>
+                    </div>
                 ) : (
-                    <table>
+                    <table className="data-table">
                         <thead>
                             <tr>
                                 <th>Course</th>
@@ -79,23 +125,23 @@ export default function StudentDashboardPage() {
                         <tbody>
                             {bookings.slice(0, 5).map((booking) => (
                                 <tr key={booking.id}>
-                                    <td>{booking.course_title}</td>
-                                    <td>
+                                    <td className="td-primary">{booking.course_title}</td>
+                                    <td className="td-mono">
                                         {booking.start_time
                                             ? new Date(booking.start_time).toLocaleString()
                                             : '-'}
                                     </td>
                                     <td>{booking.location || '-'}</td>
-                                    <td>{booking.status}</td>
+                                    <td>
+                                        <span className={`badge badge-${booking.status}`}>
+                                            {booking.status}
+                                        </span>
+                                    </td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
                 )}
-
-                <p>
-                    <Link href="/student/bookings">View all bookings</Link>
-                </p>
             </section>
         </div>
     );

@@ -91,39 +91,90 @@ export default function StudentBookingsPage() {
         return true;
     });
 
-    if (loading) return <p>Loading bookings...</p>;
-    if (error) return <p>{error}</p>;
+    if (loading) {
+        return (
+            <div className="loading-spinner">
+                <div className="spinner" />
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="empty-state">
+                <div className="empty-title">Unable to load bookings</div>
+                <div className="empty-desc">{error}</div>
+            </div>
+        );
+    }
 
     return (
         <div>
-            <button type="button" onClick={() => router.push('/student/dashboard')}>
+            <button className="btn btn-ghost btn-sm" type="button" onClick={() => router.push('/student/dashboard')}>
                 Back
             </button>
 
-            <h1>My Bookings</h1>
+            <div style={{ margin: '18px 0 24px' }}>
+                <p className="home-kicker">Student Area</p>
+                <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '2.4rem', lineHeight: 1.1 }}>
+                    My Bookings
+                </h1>
+                <p style={{ color: 'var(--text-secondary)', marginTop: 8 }}>
+                    Review upcoming, past, and cancelled course bookings.
+                </p>
+            </div>
 
-            <div>
-                <button type="button" onClick={() => setFilter('upcoming')}>
+            <div className="glass-panel">
+                <div className="toolbar">
+                <button
+                    className={`btn btn-sm ${filter === 'upcoming' ? 'btn-primary' : 'btn-ghost'}`}
+                    type="button"
+                    onClick={() => setFilter('upcoming')}
+                >
                     Upcoming
                 </button>
 
-                <button type="button" onClick={() => setFilter('past')}>
+                <button
+                    className={`btn btn-sm ${filter === 'past' ? 'btn-primary' : 'btn-ghost'}`}
+                    type="button"
+                    onClick={() => setFilter('past')}
+                >
                     Past
                 </button>
 
-                <button type="button" onClick={() => setFilter('cancelled')}>
+                <button
+                    className={`btn btn-sm ${filter === 'cancelled' ? 'btn-primary' : 'btn-ghost'}`}
+                    type="button"
+                    onClick={() => setFilter('cancelled')}
+                >
                     Cancelled
                 </button>
 
-                <button type="button" onClick={() => setFilter('all')}>
+                <button
+                    className={`btn btn-sm ${filter === 'all' ? 'btn-primary' : 'btn-ghost'}`}
+                    type="button"
+                    onClick={() => setFilter('all')}
+                >
                     All
                 </button>
-            </div>
+
+                    <div className="toolbar-right">
+                        <span className="page-info">
+                            Showing {filteredBookings.length} of {bookings.length}
+                        </span>
+                    </div>
+                </div>
 
             {filteredBookings.length === 0 ? (
-                <p>No bookings found.</p>
+                <div className="empty-state">
+                    <div className="empty-title">No bookings found</div>
+                    <div className="empty-desc">Try a different filter or browse courses to create a new booking.</div>
+                    <button className="btn btn-primary" type="button" onClick={() => router.push('/courses')}>
+                        Browse Courses
+                    </button>
+                </div>
             ) : (
-                <table>
+                <table className="data-table">
                     <thead>
                         <tr>
                             <th>Course</th>
@@ -150,10 +201,11 @@ export default function StudentBookingsPage() {
                             return (
                                 <tr key={booking.id}>
                                     <td
+                                        className="td-primary"
                                         onClick={() =>
                                             router.push(`/courses/${booking.course_id}`)
                                         }
-                                        style={{ cursor: 'pointer', color: 'blue' }}
+                                        style={{ cursor: 'pointer' }}
                                     >
                                         {booking.course_title}
                                     </td>
@@ -161,16 +213,20 @@ export default function StudentBookingsPage() {
                                     <td>{booking.instructor}</td>
                                     <td>{booking.category || 'Uncategorized'}</td>
 
-                                    <td>
+                                    <td className="td-mono">
                                         {booking.start_time
                                             ? new Date(booking.start_time).toLocaleString()
                                             : '-'}
                                     </td>
 
                                     <td>{booking.location || '-'}</td>
-                                    <td>{booking.status}</td>
-
                                     <td>
+                                        <span className={`badge badge-${booking.status}`}>
+                                            {booking.status}
+                                        </span>
+                                    </td>
+
+                                    <td className="td-mono">
                                         {booking.booked_at
                                             ? new Date(booking.booked_at).toLocaleString()
                                             : '-'}
@@ -179,6 +235,7 @@ export default function StudentBookingsPage() {
                                     <td>
                                         {canCancel ? (
                                             <button
+                                                className="btn btn-danger btn-sm"
                                                 type="button"
                                                 onClick={() => cancelBooking(booking.id)}
                                             >
@@ -194,6 +251,7 @@ export default function StudentBookingsPage() {
                     </tbody>
                 </table>
             )}
+            </div>
         </div>
     );
 }
